@@ -35,12 +35,37 @@ STDAPI DllGetClassObject(_In_ REFCLSID rclsid, _In_ REFIID riid, _Outptr_ LPVOID
 	return _AtlModule.DllGetClassObject(rclsid, riid, ppv);
 }
 
+const TCHAR szCredProviderKey[] = __T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Authentication\\Credential Providers");
+
+std::wstring GetProviderCLSID()
+{
+	WCHAR szGuidBuf[64] = L"";
+	StringFromGUID2(CLSID_Provider, szGuidBuf, _countof(szGuidBuf));
+	return szGuidBuf;
+}
+
 // DllRegisterServer - Adds entries to the system registry.
 _Use_decl_annotations_
 STDAPI DllRegisterServer(void)
 {
 	// registers object, typelib and all interfaces in typelib
 	HRESULT hr = _AtlModule.DllRegisterServer();
+	if (SUCCEEDED(hr))
+	{
+		CRegKey key;
+		if (ERROR_SUCCESS == key.Open(HKEY_LOCAL_MACHINE, szCredProviderKey))
+		{
+			std::wstring sGuid = GetProviderCLSID();
+			if (sGuid.length() > 0)
+			{
+				CRegKey keyNew;
+				if (ERROR_SUCCESS == keyNew.Create(key, sGuid.c_str()))
+				{
+					keyNew.SetStringValue(NULL, _T("EvoSolution Credential"));
+				}
+			}
+		}
+	}
 #ifdef _MERGE_PROXYSTUB
 	if (FAILED(hr))
 		return hr;
@@ -54,6 +79,16 @@ _Use_decl_annotations_
 STDAPI DllUnregisterServer(void)
 {
 	HRESULT hr = _AtlModule.DllUnregisterServer();
+	if (SUCCEEDED(hr))
+	{
+		CRegKey key;
+		if (ERROR_SUCCESS == key.Open(HKEY_LOCAL_MACHINE, szCredProviderKey))
+		{
+			std::wstring sGuid = GetProviderCLSID();
+			if (sGuid.length() > 0)
+				key.DeleteSubKey(sGuid.c_str());
+		}
+	}
 #ifdef _MERGE_PROXYSTUB
 	if (FAILED(hr))
 		return hr;

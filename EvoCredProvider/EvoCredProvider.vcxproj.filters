@@ -61,6 +61,9 @@
     <ClInclude Include="CoreLibs\EvoCodes.h">
       <Filter>CoreLibs</Filter>
     </ClInclude>
+    <ClInclude Include="EvoConsts.h">
+      <Filter>CoreLibs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EvoCredProvider.cpp">
@@ -131,7 +134,7 @@
     </Midl>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="bitmap1.bmp">
+    <Image Include="tile.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

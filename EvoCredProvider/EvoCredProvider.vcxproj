@@ -234,6 +234,7 @@
     <ClInclude Include="CoreLibs\EvoSolution.h" />
     <ClInclude Include="CoreLibs\Logger.h" />
     <ClInclude Include="dllmain.h" />
+    <ClInclude Include="EvoConsts.h" />
     <ClInclude Include="EvoCredential.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="guids.h" />
@@ -313,7 +314,7 @@
     <Midl Include="EvoCredProvider.idl" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="bitmap1.bmp" />
+    <Image Include="tile.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

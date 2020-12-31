@@ -20,6 +20,7 @@
 #include "Shared.h"
 #include "Logger.h"
 #include "RegistryReader.h"
+#include "EvoConsts.h"
 #include <tchar.h>
 
 namespace Shared {
@@ -32,7 +33,7 @@ namespace Shared {
 			return false;
 		}
 
-		RegistryReader rr(L"SOFTWARE\\Netknights GmbH\\PrivacyIDEA-CP\\");
+		RegistryReader rr(REG_STRING_EVOBASE);
 		std::wstring entry;
 		const bool isRemote = Shared::IsCurrentSessionRemote();
 

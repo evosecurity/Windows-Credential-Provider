@@ -22,65 +22,103 @@
 #include "version.h"
 #include "Logger.h"
 #include "RegistryReader.h"
+#include "EvoConsts.h"
 
 using namespace std;
+using namespace ATL;
 
-const wstring Configuration::registryPath = L"SOFTWARE\\Netknights GmbH\\PrivacyIDEA-CP\\";
-const wstring Configuration::registryRealmPath = L"SOFTWARE\\Netknights GmbH\\PrivacyIDEA-CP\\realm-mapping";
+const wstring Configuration::registryPath = REG_STRING_EVOBASE;
+const wstring Configuration::registryRealmPath = REG_STRING_EVOREALM;
+
+class CEvoRegKey : public CRegKey
+{
+public:
+	CEvoRegKey(const wstring& keyName)
+	{
+		Open(HKEY_LOCAL_MACHINE, keyName.c_str(), KEY_READ);
+	}
+	bool Get(LPCWSTR value_name, wstring& wsOut)
+	{
+		WCHAR szBuf[MAX_PATH]; *szBuf = 0;
+		ULONG nChars = 0;
+		if (m_hKey) QueryStringValue(value_name, szBuf, &nChars);
+		wsOut = szBuf;
+		return nChars > 0;
+	}
+
+	bool Get(LPCWSTR value_name, int& i)
+	{
+
+		DWORD dw = 0;
+		bool bRet = (m_hKey != 0 && ERROR_SUCCESS == QueryDWORDValue(value_name, dw));
+		i = dw;
+		return bRet;
+	}
+
+	bool Get(LPCWSTR value_name, bool& b)
+	{
+		DWORD dw = 0;
+		bool bRet = (m_hKey != 0 && ERROR_SUCCESS == QueryDWORDValue(value_name, dw));
+		b = (dw != 0);
+		return bRet;
+	}
+};
 
 Configuration::Configuration()
 {
-	RegistryReader rr(registryPath);
+	CEvoRegKey rkey(registryPath);
 
-	// Credential Provider specific config
-	bitmapPath = rr.getRegistry(L"v1_bitmap_path");
-	hideDomainName = rr.getBoolRegistry(L"hide_domainname");
-	hideFullName = rr.getBoolRegistry(L"hide_fullname");
-	hide_otp_sleep_s = rr.getIntRegistry(L"hide_otp_sleep_s");
+	rkey.Get(L"v1_bitmap_path", bitmapPath);
+	rkey.Get(L"hide_domainname", hideDomainName);
+	rkey.Get(L"hide_fullname", hideFullName);
+	rkey.Get(L"hide_otp_sleep_s", hide_otp_sleep_s);
 
-	twoStepHideOTP = rr.getBoolRegistry(L"two_step_hide_otp");
-	twoStepSendEmptyPassword = rr.getBoolRegistry(L"two_step_send_empty_password");
-	twoStepSendPassword = rr.getBoolRegistry(L"two_step_send_password");
+	rkey.Get(L"two_step_hide_otp", twoStepHideOTP);
+	rkey.Get(L"two_step_send_empty_password", twoStepSendEmptyPassword);
+	rkey.Get(L"two_step_send_password", twoStepSendPassword);
 
-	piconfig.logPasswords = rr.getBoolRegistry(L"log_sensitive");
-	releaseLog = rr.getBoolRegistry(L"release_log");
+	rkey.Get(L"log_sensitive", piconfig.logPasswords);
+	rkey.Get(L"release_log", releaseLog);
 
-	showDomainHint = rr.getBoolRegistry(L"show_domain_hint");
+	rkey.Get(L"show_domain_hint", showDomainHint);
 	// Custom field texts: check if set, otherwise use defaults (from header)
-	wstring tmp = rr.getRegistry(L"login_text");
+	wstring tmp;
+	rkey.Get(L"login_text", tmp);
 	loginText = tmp.empty() ? L"EvoSecurity Login" : tmp;
 
-	otpFieldText = rr.getRegistry(L"otp_text");
+	rkey.Get(L"otp_text", otpFieldText);
 
-	tmp = rr.getRegistry(L"otp_fail_text");
+	rkey.Get(L"otp_fail_text", tmp);
 	defaultOTPFailureText = tmp.empty() ? Utilities::GetTranslatedText(TEXT_WRONG_OTP) : tmp;
 
-	tmp = rr.getRegistry(L"otp_hint_text");
+	rkey.Get(L"otp_hint_text", tmp);
 	defaultOTPHintText = tmp.empty() ? Utilities::GetTranslatedText(TEXT_DEFAULT_OTP_HINT) : tmp;
 
 	// Config for PrivacyIDEA
-	piconfig.hostname = rr.getRegistry(L"hostname");
+	rkey.Get(L"hostname", piconfig.hostname);
 	// Check if the path contains the placeholder, if so replace with nothing
-	tmp = rr.getRegistry(L"path");
+	rkey.Get(L"path", tmp);
 	piconfig.path = (tmp == L"/path/to/pi" ? L"" : tmp);
 
-	piconfig.ignoreUnknownCA = rr.getBoolRegistry(L"ssl_ignore_unknown_ca");
-	piconfig.ignoreInvalidCN = rr.getBoolRegistry(L"ssl_ignore_invalid_cn");
-	piconfig.customPort = rr.getIntRegistry(L"custom_port");
-	piconfig.offlineFilePath = rr.getRegistry(L"offline_file");
-	piconfig.offlineTryWindow = rr.getIntRegistry(L"offline_try_window");
+	rkey.Get(L"ssl_ignore_unknown_ca", piconfig.ignoreUnknownCA);
+	rkey.Get(L"ssl_ignore_invalid_cn", piconfig.ignoreInvalidCN);
+	rkey.Get(L"custom_port", piconfig.customPort);
+	rkey.Get(L"offline_file", piconfig.offlineFilePath);
+	rkey.Get(L"offline_try_window", piconfig.offlineTryWindow);
 
-	piconfig.resolveTimeoutMS = rr.getIntRegistry(L"resolve_timeout");
-	piconfig.connectTimeoutMS = rr.getIntRegistry(L"connect_timeout");
-	piconfig.sendTimeoutMS = rr.getIntRegistry(L"send_timeout");
-	piconfig.receiveTimeoutMS = rr.getIntRegistry(L"receive_timeout");
+	rkey.Get(L"resolve_timeout", piconfig.resolveTimeoutMS);
+	rkey.Get(L"connect_timeout", piconfig.connectTimeoutMS);
+	rkey.Get(L"send_timeout", piconfig.sendTimeoutMS);
+	rkey.Get(L"receive_timeout", piconfig.receiveTimeoutMS);
 
 	// format domain\username or computername\username
-	excludedAccount = rr.getRegistry(L"excluded_account");
+	rkey.Get(L"excluded_account", excludedAccount);
 
 	// Realm Mapping
-	piconfig.defaultRealm = rr.getRegistry(L"default_realm");
+	rkey.Get(L"default_realm", piconfig.defaultRealm);
+	if (rkey) rkey.Close();
 
+	RegistryReader rr(registryPath);
 	if (!rr.getAll(registryRealmPath, piconfig.realmMap))
 	{
 		piconfig.realmMap.clear();
