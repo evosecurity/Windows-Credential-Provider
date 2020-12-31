@@ -1,0 +1,27 @@
+// TestCredProvider.idl : IDL source for TestCredProvider
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (TestCredProvider.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "CredentialProvider.idl";
+
+[
+	uuid(a8d9a214-5fdd-48f5-ae11-30b1b7bdf8bd),
+	version(1.0),
+]
+library TestCredProviderLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(a81f782d-cf30-439a-bad8-645d9862ea99)
+	]
+	coclass Provider
+	{
+		[default] interface ICredentialProvider;
+	};
+};
+
+import "shobjidl.idl";
