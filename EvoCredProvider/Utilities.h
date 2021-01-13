@@ -1,6 +1,6 @@
 #pragma once
 #include "Configuration.h"
-#include "CoreLibs/Logger.h"
+#include "Logger.h"
 #include "scenario.h"
 #include <memory>
 #include <Windows.h>

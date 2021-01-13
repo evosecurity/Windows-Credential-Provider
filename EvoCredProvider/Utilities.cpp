@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Utilities.h"
 #include "helpers.h"
-#include "SecureString.h"
+#include "EvoSecureString.h"
 #include "scenario.h"
 #include "guids.h"
 #include <Shlwapi.h>

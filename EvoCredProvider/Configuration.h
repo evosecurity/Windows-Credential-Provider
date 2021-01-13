@@ -19,9 +19,8 @@
 
 #pragma once
 #include "EvoConf.h"
-#include "CoreLibs/Challenge.h"
-#include "CoreLibs/SecureString.h"
-#include <string>
+#include "Challenge.h"
+#include "EvoSecureString.h"
 #include <credentialprovider.h>
 
 class Configuration

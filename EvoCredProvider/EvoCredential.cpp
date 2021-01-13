@@ -481,18 +481,8 @@ HRESULT CEvoCredential::ReportResult(
 	return S_OK;
 }
 
-HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
+bool CEvoCredential::IsAccountExcluded()
 {
-	DebugPrint(__FUNCTION__);
-	UNREFERENCED_PARAMETER(pqcws);
-
-	m_config->provider.pCredProvCredential = this;
-	m_config->provider.pCredProvCredentialEvents = m_pCredProvCredentialEvents;
-	m_config->provider.field_strings = _rgFieldStrings;
-	_util.ReadFieldValues();
-
-
-	// Check if the user is the excluded account
 	if (!m_config->excludedAccount.empty())
 	{
 		wstring toCompare;
@@ -504,9 +494,27 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 			DebugPrint("Login data matches excluded account, skipping 2FA...");
 			// Simulate 2FA success so the logic in GetSerialization can stay the same
 			_piStatus = EVOSOL_AUTH_SUCCESS;
-			return S_OK;
+			return true;
 		}
 	}
+
+	return false;
+}
+
+HRESULT CEvoCredential::Connect2(IQueryContinueWithStatus* pqcws)
+{
+	DebugPrint(__FUNCTION__);
+	UNREFERENCED_PARAMETER(pqcws);
+
+	m_config->provider.pCredProvCredential = this;
+	m_config->provider.pCredProvCredentialEvents = m_pCredProvCredentialEvents;
+	m_config->provider.field_strings = _rgFieldStrings;
+	_util.ReadFieldValues();
+
+
+	// Check if the user is the excluded account
+	if (IsAccountExcluded())
+		return S_OK;
 
 	if (m_config->bypassPrivacyIDEA)
 	{
@@ -518,14 +526,17 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 
 	if (m_config->twoStepHideOTP && !m_config->isSecondStep)
 	{
+		DebugPrint("Hey hey, first part... yes?");
 		if (!m_config->twoStepSendEmptyPassword && !m_config->twoStepSendPassword)
 		{
+			DebugPrint("Doing the sleep");
 			// Delay for a short moment, otherwise logonui freezes (???)
 			this_thread::sleep_for(chrono::milliseconds(200));
 			// Then skip to next step
 		}
 		else
 		{
+			DebugPrint("Doing the non-sleep");
 			// Send either empty pass or the windows password in first step
 			SecureWString toSend = L"";
 			if (!m_config->twoStepSendEmptyPassword && m_config->twoStepSendPassword)
@@ -560,6 +571,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	//////////////////// SECOND STEP ////////////////////////
 	else if (m_config->twoStepHideOTP && m_config->isSecondStep)
 	{
+		DebugPrint("This is second part, I hope.");
 		// Send with optional transaction_id from first step
 		_piStatus = _privacyIDEA.validateCheck(
 			m_config->credential.username,
@@ -570,6 +582,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	//////// NORMAL SETUP WITH 3 FIELDS -> SEND OTP ////////
 	else
 	{
+		DebugPrint("This is the last part.");
 		_piStatus = _privacyIDEA.validateCheck(
 			m_config->credential.username,
 			m_config->credential.domain,
@@ -580,6 +593,24 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	return S_OK; // always S_OK
 }
 
+HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
+{
+	DebugPrint(__FUNCTION__);
+	UNREFERENCED_PARAMETER(pqcws);
+
+	m_config->provider.pCredProvCredential = this;
+	m_config->provider.pCredProvCredentialEvents = m_pCredProvCredentialEvents;
+	m_config->provider.field_strings = _rgFieldStrings;
+	_util.ReadFieldValues();
+
+
+	// Check if the user is the excluded account
+	if (IsAccountExcluded())
+		return S_OK;
+
+
+	return S_OK;
+}
 void CEvoCredential::PushAuthenticationCallback(bool success)
 {
 	DebugPrint(__FUNCTION__);
@@ -596,7 +627,7 @@ void CEvoCredential::PushAuthenticationCallback(bool success)
 // Collect the username and password into a serialized credential for the correct usage scenario 
 // (logon/unlock is what's demonstrated in this sample).  LogonUI then passes these credentials 
 // back to the system to log on.
-HRESULT CEvoCredential::GetSerialization(
+HRESULT CEvoCredential::GetSerialization2(
 	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
 	__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
 	__deref_out_opt PWSTR* ppwszOptionalStatusText,
@@ -780,4 +811,69 @@ HRESULT CEvoCredential::GetSerialization(
 	DebugPrint("CCredential::GetSerialization - END");
 #endif //_DEBUG
 	return retVal;
+}
+
+HRESULT CEvoCredential::GetSerialization(
+	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
+	__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
+	__deref_out_opt PWSTR* ppwszOptionalStatusText,
+	__out CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon
+)
+{
+	DebugPrint(__FUNCTION__);
+
+	*pcpgsr = CPGSR_RETURN_NO_CREDENTIAL_FINISHED;
+
+	HRESULT hr = E_FAIL, retVal = S_OK;
+
+	m_config->provider.pCredProvCredentialEvents = m_pCredProvCredentialEvents;
+	m_config->provider.pCredProvCredential = this;
+
+	m_config->provider.pcpcs = pcpcs;
+	m_config->provider.pcpgsr = pcpgsr;
+
+	m_config->provider.status_icon = pcpsiOptionalStatusIcon;
+	m_config->provider.status_text = ppwszOptionalStatusText;
+
+	m_config->provider.field_strings = _rgFieldStrings;
+
+
+	// else
+	if (1)
+	{
+		if (m_config->userCanceled)
+		{
+			*m_config->provider.status_icon = CPSI_ERROR;
+			*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_FINISHED;
+			SHStrDupW(L"Logon cancelled", m_config->provider.status_text);
+			return S_FALSE;
+		}
+
+		if (_piStatus != EVOSOL_AUTH_SUCCESS && m_config->pushAuthenticationSuccessful == false)
+		{
+			if (m_config->isSecondStep == false && m_config->twoStepHideOTP)
+			{
+				// Prepare for the second step (input only OTP)
+				m_config->isSecondStep = true;
+				m_config->clearFields = false;
+				_util.SetScenario(m_config->provider.pCredProvCredential,
+					m_config->provider.pCredProvCredentialEvents,
+					SCENARIO::SECOND_STEP);
+				*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+			}
+		}
+	}
+
+#ifdef _DEBUG
+	if (pcpgsr)
+	{
+		if (*pcpgsr == CPGSR_NO_CREDENTIAL_FINISHED) { DebugPrint("CPGSR_NO_CREDENTIAL_FINISHED"); }
+		if (*pcpgsr == CPGSR_NO_CREDENTIAL_NOT_FINISHED) { DebugPrint("CPGSR_NO_CREDENTIAL_NOT_FINISHED"); }
+		if (*pcpgsr == CPGSR_RETURN_CREDENTIAL_FINISHED) { DebugPrint("CPGSR_RETURN_CREDENTIAL_FINISHED"); }
+		if (*pcpgsr == CPGSR_RETURN_NO_CREDENTIAL_FINISHED) { DebugPrint("CPGSR_RETURN_NO_CREDENTIAL_FINISHED"); }
+	}
+	else { DebugPrint("pcpgsr is a nullpointer!"); }
+	DebugPrint("CCredential::GetSerialization - END");
+#endif //_DEBUG
+	return E_FAIL;
 }

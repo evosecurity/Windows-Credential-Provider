@@ -72,28 +72,28 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(OutDir)obj\$(ProjectName)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\CoreLibs</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\CoreLibs;..\EvoCommon</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(OutDir)obj\$(ProjectName)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\CoreLibs</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\CoreLibs;..\EvoCommon</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(OutDir)obj\$(ProjectName)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\CoreLibs</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\CoreLibs;..\EvoCommon</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IgnoreImportLibrary>true</IgnoreImportLibrary>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)-$(Platform)\</OutDir>
     <IntDir>$(OutDir)obj\$(ProjectName)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\CoreLibs</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);.\CoreLibs;..\EvoCommon</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -230,9 +230,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CoreLibs\EvoCodes.h" />
     <ClInclude Include="CoreLibs\EvoSolution.h" />
-    <ClInclude Include="CoreLibs\Logger.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="EvoConsts.h" />
     <ClInclude Include="EvoCredential.h" />
@@ -249,9 +247,6 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CoreLibs\Challenge.cpp" />
     <ClCompile Include="CoreLibs\EvoSolution.cpp" />
-    <ClCompile Include="CoreLibs\Logger.cpp" />
-    <ClCompile Include="CoreLibs\RegistryReader.cpp" />
-    <ClCompile Include="CoreLibs\Shared.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</CompileAsManaged>
@@ -315,6 +310,11 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="tile.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EvoCommon\EvoCommon.vcxproj">
+      <Project>{f8d46830-b34a-42aa-a7e7-ebc1bd04a3b5}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

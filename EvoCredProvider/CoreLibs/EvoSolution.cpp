@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "SecureString.h"
+#include "EvoSecureString.h"
 #include "EvoSolution.h"
 #include <codecvt>
 #include <thread>
@@ -51,14 +51,12 @@ std::wstring EvoSolution::getLastErrorMessage()
 	return s2ws(_lastErrorMessage);
 }
 
-
 std::string EvoSolution::ws2s(const std::wstring& ws)
 {
 	using convert_typeX = std::codecvt_utf8<wchar_t>;
 	std::wstring_convert<convert_typeX, wchar_t> converterX;
 
 	return converterX.to_bytes(ws);
-
 }
 
 std::wstring EvoSolution::toUpperCase(std::wstring s)

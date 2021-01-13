@@ -2,7 +2,7 @@
 
 #include "../EvoConf.h"
 #include "Challenge.h"
-#include "SecureString.h"
+#include "EvoSecureString.h"
 #include <functional>
 #include <atomic>
 

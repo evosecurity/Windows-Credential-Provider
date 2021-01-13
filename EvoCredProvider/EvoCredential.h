@@ -75,9 +75,15 @@ public:
 	HRESULT Connect(IQueryContinueWithStatus* pqcws);
 	HRESULT GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
 
+	HRESULT Connect2(IQueryContinueWithStatus* pqcws);
+	HRESULT GetSerialization2(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
 
 	void PushAuthenticationCallback(bool success);
 protected:
+
+	bool IsAccountExcluded();
+
+
 	std::shared_ptr<Configuration> m_config;
 
 	CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR	_rgCredProvFieldDescriptors[FID_NUM_FIELDS];	// An array holding the type and 

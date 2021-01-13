@@ -46,9 +46,6 @@
     <ClInclude Include="Provider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CoreLibs\Logger.h">
-      <Filter>CoreLibs</Filter>
-    </ClInclude>
     <ClInclude Include="EvoCredential.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -56,9 +53,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CoreLibs\EvoSolution.h">
-      <Filter>CoreLibs</Filter>
-    </ClInclude>
-    <ClInclude Include="CoreLibs\EvoCodes.h">
       <Filter>CoreLibs</Filter>
     </ClInclude>
     <ClInclude Include="EvoConsts.h">
@@ -83,15 +77,6 @@
     </ClCompile>
     <ClCompile Include="Provider.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CoreLibs\Logger.cpp">
-      <Filter>CoreLibs</Filter>
-    </ClCompile>
-    <ClCompile Include="CoreLibs\Shared.cpp">
-      <Filter>CoreLibs</Filter>
-    </ClCompile>
-    <ClCompile Include="CoreLibs\RegistryReader.cpp">
-      <Filter>CoreLibs</Filter>
     </ClCompile>
     <ClCompile Include="Configuration.cpp">
       <Filter>Source Files</Filter>

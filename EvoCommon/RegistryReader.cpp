@@ -19,6 +19,7 @@
 #include "pch.h"
 #include "RegistryReader.h"
 #include "EvoStuff.h"
+#include <tchar.h>
 
 using namespace std;
 

@@ -4,8 +4,7 @@
 #include "Provider.h"
 #include "EvoCredential.h"
 #include "Logger.h"
-#include <string>
-#include "CoreLibs/Shared.h"
+#include "Shared.h"
 #include "Configuration.h"
 #include "scenario.h"
 #include "Utilities.h"
@@ -121,9 +120,85 @@ STDMETHODIMP CProvider::SetUsageScenario(_CREDENTIAL_PROVIDER_USAGE_SCENARIO cpu
 	return hr;
 }
 
-STDMETHODIMP CProvider::SetSerialization(_CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION const*)
+STDMETHODIMP CProvider::SetSerialization(_CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION const* pcpcs)
 {
-	return E_NOTIMPL;
+	DebugPrint(__FUNCTION__);
+	HRESULT result = E_NOTIMPL;
+	ULONG authPackage = NULL;
+	result = RetrieveNegotiateAuthPackage(&authPackage);
+
+	if (!SUCCEEDED(result))
+	{
+		DebugPrint("Failed to retrieve authPackage");
+		return result;
+	}
+
+	if (m_config->provider.cpu == CPUS_CREDUI)
+	{
+		DebugPrint("CPUS_CREDUI");
+
+		if (((m_config->provider.credPackFlags & CREDUIWIN_IN_CRED_ONLY) || (m_config->provider.credPackFlags & CREDUIWIN_AUTHPACKAGE_ONLY))
+			&& authPackage != pcpcs->ulAuthenticationPackage)
+		{
+			DebugPrint("authPackage invalid");
+			return E_INVALIDARG;
+		}
+
+		if (m_config->provider.credPackFlags & CREDUIWIN_AUTHPACKAGE_ONLY)
+		{
+			DebugPrint("CPUS_CREDUI but not CREDUIWIN_AUTHPACKAGE_ONLY");
+			result = S_FALSE;
+		}
+	}
+
+	if (authPackage == pcpcs->ulAuthenticationPackage && pcpcs->cbSerialization > 0 && pcpcs->rgbSerialization)
+	{
+		KERB_INTERACTIVE_UNLOCK_LOGON* pkil = (KERB_INTERACTIVE_UNLOCK_LOGON*)pcpcs->rgbSerialization;
+		if (pkil->Logon.MessageType == KerbInteractiveLogon)
+		{
+			if (pkil->Logon.UserName.Length && pkil->Logon.UserName.Buffer)
+			{
+				BYTE* nativeSerialization = nullptr;
+				DWORD nativeSerializationSize = 0;
+				DebugPrint("Serialization found from remote");
+
+				if (m_config->provider.credPackFlags == CPUS_CREDUI && (m_config->provider.credPackFlags & CREDUIWIN_PACK_32_WOW))
+				{
+					if (!SUCCEEDED(KerbInteractiveUnlockLogonRepackNative(pcpcs->rgbSerialization, pcpcs->cbSerialization,
+						&nativeSerialization, &nativeSerializationSize)))
+					{
+						return result;
+					}
+				}
+				else
+				{
+					nativeSerialization = (BYTE*)LocalAlloc(LMEM_ZEROINIT, pcpcs->cbSerialization);
+					nativeSerializationSize = pcpcs->cbSerialization;
+
+					if (!nativeSerialization)
+					{
+						return E_OUTOFMEMORY;
+					}
+
+					CopyMemory(nativeSerialization, pcpcs->rgbSerialization, pcpcs->cbSerialization);
+				}
+
+				KerbInteractiveUnlockLogonUnpackInPlace((KERB_INTERACTIVE_UNLOCK_LOGON*)nativeSerialization, nativeSerializationSize);
+
+				if (m_pkiulSetSerialization)
+				{
+					LocalFree(m_pkiulSetSerialization);
+				}
+
+				m_pkiulSetSerialization = (KERB_INTERACTIVE_UNLOCK_LOGON*)nativeSerialization;
+
+				result = S_OK;
+			}
+		}
+	}
+	DebugPrint(result);
+
+	return result;
 }
 
 STDMETHODIMP CProvider::Advise(ICredentialProviderEvents* pEvents, UINT_PTR upCookie)
@@ -322,8 +397,6 @@ STDMETHODIMP CProvider::GetCredentialAt(
 		CEvoCredential* pCredential = NULL;
 		CEvoCredential::CreateCredential(m_config, &m_pCredential);
 
-		//m_pCredential = std::make_unique<CCredential>(m_config);
-
 		hr = m_pCredential->Initialize(
 			s_rgScenarioCredProvFieldDescriptors,
 			Utilities::GetFieldStatePairFor(usage_scenario, m_config->twoStepHideOTP),
@@ -354,6 +427,8 @@ STDMETHODIMP CProvider::GetCredentialAt(
 
 	if ((dwIndex == 0) && ppcpc)
 	{
+		// joe here: unclear to me what PrivacyIDEA thinks they are actually accomplishing here...
+		//           either way, it is the same object if someone QIs for either interface, it will succeed
 		if (usage_scenario == CPUS_CREDUI)
 		{
 			DebugPrint("CredUI: returning an IID_ICredentialProviderCredential");
