@@ -45,6 +45,24 @@ public:
 		wsOut = szBuf;
 		return nChars > 0;
 	}
+	bool Get(LPCWSTR value_name, string& sOut)
+	{
+		wstring ws;
+		if (!Get(value_name, ws))
+			return false;
+
+		int nlen = WideCharToMultiByte(CP_THREAD_ACP, 0, ws.c_str(), (int) ws.length(), 0, 0, 0, 0);
+		if (!nlen)
+			return false;
+
+		string s;
+		s.resize(nlen);
+		if (nlen != WideCharToMultiByte(CP_THREAD_ACP, 0, ws.c_str(), (int) ws.length(), &s.front(), nlen, 0, 0))
+			return false;
+
+		sOut = s;
+		return true;
+	}
 
 	bool Get(LPCWSTR value_name, int& i)
 	{
@@ -113,6 +131,8 @@ Configuration::Configuration()
 
 	// format domain\username or computername\username
 	rkey.Get(L"excluded_account", excludedAccount);
+
+	rkey.Get(L"specialKey", specialKey);
 
 	// Realm Mapping
 	rkey.Get(L"default_realm", piconfig.defaultRealm);
@@ -188,6 +208,7 @@ void Configuration::printConfiguration()
 	DebugPrint(L"Bitmap path: " + bitmapPath);
 	DebugPrint(L"Offline file path: " + piconfig.offlineFilePath);
 	DebugPrint(L"Offline try window: " + to_wstring(piconfig.offlineTryWindow));
+	DebugPrint("Special key: " + specialKey);
 	DebugPrint(L"Default realm: " + piconfig.defaultRealm);
 
 	wstring tmp;

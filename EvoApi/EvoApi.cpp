@@ -210,8 +210,6 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
     if (bResults)
         bResults = WinHttpReceiveResponse(hRequest, NULL);
 
-    //string response;
-
     if (bResults)
     {
         DWORD dwHeaderSize = 0;
@@ -222,10 +220,12 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
             ws.resize(dwHeaderSize);
             bResults = WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
                 &ws.front(), &dwHeaderSize, WINHTTP_NO_HEADER_INDEX);
+#if defined(_DEBUG) && FALSE
             if (bResults)
             {
                 std::wcout << ws << endl;
             }
+#endif
 
             DWORD dwSizeStatusCode = sizeof(&evoApiResponse.dwStatus);
             WinHttpQueryHeaders(hRequest, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX,

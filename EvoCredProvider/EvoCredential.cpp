@@ -501,7 +501,7 @@ bool CEvoCredential::IsAccountExcluded()
 	return false;
 }
 
-HRESULT CEvoCredential::Connect2(IQueryContinueWithStatus* pqcws)
+HRESULT CEvoCredential::ConnectOrig(IQueryContinueWithStatus* pqcws)
 {
 	DebugPrint(__FUNCTION__);
 	UNREFERENCED_PARAMETER(pqcws);
@@ -627,7 +627,7 @@ void CEvoCredential::PushAuthenticationCallback(bool success)
 // Collect the username and password into a serialized credential for the correct usage scenario 
 // (logon/unlock is what's demonstrated in this sample).  LogonUI then passes these credentials 
 // back to the system to log on.
-HRESULT CEvoCredential::GetSerialization2(
+HRESULT CEvoCredential::GetSerializationOrig(
 	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
 	__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
 	__deref_out_opt PWSTR* ppwszOptionalStatusText,

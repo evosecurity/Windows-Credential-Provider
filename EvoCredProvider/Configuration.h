@@ -77,6 +77,8 @@ public:
 	bool clearFields = true;
 	bool bypassPrivacyIDEA = false;
 
+	std::string specialKey;
+
 	struct PROVIDER_
 	{
 		ICredentialProviderEvents* pCredentialProviderEvents = nullptr;

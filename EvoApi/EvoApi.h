@@ -33,7 +33,7 @@ public:
         ResponseString request_id;
     };
 
-    struct ValidateMFAResponse
+    struct LoginResponse
     {
         bool success;
         int offlineCode;
@@ -44,15 +44,13 @@ public:
         ResponseString cipher;
     };
 
-    struct CheckLoginResponse
+
+    struct ValidateMFAResponse : LoginResponse
     {
-        bool success;
-        int offlineCode;
-        ResponseString data;
-        ResponseString salt;
-        ResponseString iv;
-        int iters;
-        ResponseString cipher;
+    };
+
+    struct CheckLoginResponse : LoginResponse
+    {
     };
 
     bool Authenticate(LPCWSTR pwzUser, LPCWSTR pwzPassword, LPCWSTR pwzEnvrironmentUrl, AuthenticateResponse& authResponse );
