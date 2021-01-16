@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include <EvoApi.h>
+#include <decrypt.h>
 #include "EvoCredential.h"
 #include "Logger.h"
 #include "helpers.h"
@@ -593,6 +595,47 @@ HRESULT CEvoCredential::ConnectOrig(IQueryContinueWithStatus* pqcws)
 	return S_OK; // always S_OK
 }
 
+bool GetCredsFromPayload(EvoAPI::LoginResponse& response, std::shared_ptr<Configuration> config, SecureWString& user, SecureWString& pw, SecureWString& domain)
+{
+	try
+	{
+		DebugPrint("Special key: " + config->specialKey);
+		secure_string sData = RubyDecode(response.data, response.salt, response.iv, config->specialKey);
+		if (sData.length() == 0)
+			return false;
+
+		///  TODO: need to create secure versions of these ???
+		SecureWString wData = EvoSolution::s2ws(sData.c_str()).c_str();
+
+		size_t find = wData.find(',');
+		if (find == wData.npos)
+			return false;
+
+		SecureWString userAndDomain = wData.substr(0, find);
+		pw = wData.substr(find + 1);
+
+		find = userAndDomain.find('\\');
+		if (find != userAndDomain.npos)
+		{
+			domain = userAndDomain.substr(0, find);
+			user = userAndDomain.substr(find + 1);
+		}
+		else
+		{
+			user = userAndDomain;
+			domain = L"";
+		}
+
+		return true;
+	}
+	catch (...)
+	{
+
+	}
+	return false;
+}
+
+
 HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 {
 	DebugPrint(__FUNCTION__);
@@ -608,7 +651,54 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	if (IsAccountExcluded())
 		return S_OK;
 
+	if (m_config->twoStepHideOTP && !m_config->isSecondStep) {
+		// is first step
+		DebugPrint("Connect First step");
+	}
+	else if (m_config->twoStepHideOTP && m_config->isSecondStep) {
+		// is second step
+		DebugPrint("Connect Second step");
+		
+		EvoAPI::ValidateMFAResponse response;
+		EvoAPI evoApi;
+		if (evoApi.ValidateMFA(m_config->credential.otp, m_config->credential.username, m_config->credential.password.c_str(), m_config->environmentUrl, response))
+		{
+			SecureWString user, pw, domain;
+			if (GetCredsFromPayload(response, m_config, user, pw, domain))
+			{
+				ReleaseDebugPrint(L"Got creds from payload");
 
+				m_config->credential.validatedUsername = user;
+				m_config->credential.validatedPassword = pw;
+				m_config->credential.validatedDomain = domain;
+
+				_piStatus = EVOSOL_AUTH_SUCCESS;
+
+#ifdef _DEBUG
+				wstring s(L"Payload user: ");
+				s += wstring(user.c_str());
+				DebugPrint(s);
+
+				s = L"Payload pw: ";
+				s += wstring(pw.c_str());
+				DebugPrint(s);
+
+				s = L"Payload domain: ";
+				s += wstring(domain.c_str());
+				DebugPrint(s);
+#endif
+			}
+			else {
+				ReleaseDebugPrint("Could not get payload creds");
+			}
+		}
+		else
+		{
+			_piStatus = EVOSOL_AUTH_FAILURE;
+		}
+	}
+
+	DebugPrint("END Connect");
 	return S_OK;
 }
 void CEvoCredential::PushAuthenticationCallback(bool success)
@@ -838,8 +928,15 @@ HRESULT CEvoCredential::GetSerialization(
 	m_config->provider.field_strings = _rgFieldStrings;
 
 
-	// else
-	if (1)
+	if (m_config->credential.passwordMustChange)
+	{
+		/// TODO: add code
+	}
+	else if (m_config->credential.passwordChanged)
+	{
+		/// TODO: add code
+	}
+	else 
 	{
 		if (m_config->userCanceled)
 		{
@@ -851,6 +948,9 @@ HRESULT CEvoCredential::GetSerialization(
 
 		if (_piStatus != EVOSOL_AUTH_SUCCESS && m_config->pushAuthenticationSuccessful == false)
 		{
+			// If we got here, Connect() is not a success yet
+			// set UI for first or second step
+
 			if (m_config->isSecondStep == false && m_config->twoStepHideOTP)
 			{
 				// Prepare for the second step (input only OTP)
@@ -861,8 +961,88 @@ HRESULT CEvoCredential::GetSerialization(
 					SCENARIO::SECOND_STEP);
 				*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
 			}
+			else
+			{
+				// Failed authentication or error section
+				// Create a message depending on the error
+				int errorCode = 0;
+				wstring errorMessage;
+				bool isGerman = GetUserDefaultUILanguage() == 1031;
+				if (_piStatus == EVOSOL_AUTH_FAILURE)
+				{
+					errorMessage = m_config->defaultOTPFailureText;
+				}
+				// In this case the error is contained in a valid response from PI
+				else if (_piStatus == EVOSOL_AUTH_ERROR)
+				{
+					errorMessage = _privacyIDEA.getLastErrorMessage();
+					errorCode = _privacyIDEA.getLastError();
+				}
+				else if (_piStatus == EVOSOL_WRONG_OFFLINE_SERVER_UNAVAILABLE)
+				{
+					errorMessage = isGerman ? L"Server nicht erreichbar oder falsches offline OTP!" :
+						L"Server unreachable or wrong offline OTP!";
+				}
+				else if (_piStatus == EVOSOL_ENDPOINT_SERVER_UNAVAILABLE)
+				{
+					errorMessage = isGerman ? L"Server nicht erreichbar!" : L"Server unreachable!";
+				}
+				else if (_piStatus == EVOSOL_ENDPOINT_SETUP_ERROR)
+				{
+					errorMessage = isGerman ? L"Fehler beim Verbindungsaufbau!" : L"Error while setting up the connection!";
+				}
+				ShowErrorMessage(errorMessage, errorCode);
+				_util.ResetScenario(this, m_pCredProvCredentialEvents);
+				*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+			}
+		}
+		else if (_piStatus == EVOSOL_AUTH_SUCCESS || m_config->pushAuthenticationSuccessful)
+		{
+			// ok, somehow EVO succeeded 
+
+			// Reset the authentication
+			_piStatus = EVOSOL_STATUS_NOT_SET;
+			m_config->pushAuthenticationSuccessful = false;
+			//_privacyIDEA.stopPoll();
+
+			// Pack credentials for logon
+			if (m_config->provider.cpu == CPUS_CREDUI)
+			{
+				DebugPrint("Doing CredPackAuthentication()");
+				hr = _util.CredPackAuthentication(pcpgsr, pcpcs, m_config->provider.cpu,
+					m_config->credential.validatedUsername.c_str(), m_config->credential.validatedPassword, m_config->credential.validatedDomain.c_str());
+			}
+			else
+			{
+				DebugPrint("Doing KerberosLogin()");
+				hr = _util.KerberosLogon(pcpgsr, pcpcs, m_config->provider.cpu,
+					m_config->credential.validatedUsername.c_str(), m_config->credential.validatedPassword, m_config->credential.validatedDomain.c_str());
+			}
+
+			if (!SUCCEEDED(hr))
+				retVal = S_FALSE;
+		}
+		else
+		{
+			// privacyIDEA had this block, but IDK how it can actually get to here
+			ShowErrorMessage(L"Unexpected error", 0);
+
+			// Jump to the first login window
+			_util.ResetScenario(this, m_pCredProvCredentialEvents);
+			retVal = S_FALSE;
 		}
 	}
+
+	/// TODO: not sure about this... why it's necessary ... etc...
+	if (m_config->clearFields)
+	{
+		_util.Clear(_rgFieldStrings, _rgCredProvFieldDescriptors, this, m_pCredProvCredentialEvents, CLEAR_FIELDS_CRYPT);
+	}
+	else
+	{
+		m_config->clearFields = true; // it's a one-timer...
+	}
+
 
 #ifdef _DEBUG
 	if (pcpgsr)
@@ -873,7 +1053,7 @@ HRESULT CEvoCredential::GetSerialization(
 		if (*pcpgsr == CPGSR_RETURN_NO_CREDENTIAL_FINISHED) { DebugPrint("CPGSR_RETURN_NO_CREDENTIAL_FINISHED"); }
 	}
 	else { DebugPrint("pcpgsr is a nullpointer!"); }
-	DebugPrint("CCredential::GetSerialization - END");
+	DebugPrint("CEvoCredential::GetSerialization - END");
 #endif //_DEBUG
-	return E_FAIL;
+	return retVal;
 }

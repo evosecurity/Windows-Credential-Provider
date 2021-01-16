@@ -74,6 +74,8 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, secure_string& user, s
         user = sData.substr(0, find);
         pw = sData.substr(find + 1);
 
+
+
         return true;
     }
     catch (...)

@@ -23,6 +23,7 @@
 #include "Logger.h"
 #include "RegistryReader.h"
 #include "EvoConsts.h"
+#include "EvoSolution.h"
 
 using namespace std;
 using namespace ATL;
@@ -40,7 +41,7 @@ public:
 	bool Get(LPCWSTR value_name, wstring& wsOut)
 	{
 		WCHAR szBuf[MAX_PATH]; *szBuf = 0;
-		ULONG nChars = 0;
+		ULONG nChars = MAX_PATH;
 		if (m_hKey) QueryStringValue(value_name, szBuf, &nChars);
 		wsOut = szBuf;
 		return nChars > 0;
@@ -51,16 +52,18 @@ public:
 		if (!Get(value_name, ws))
 			return false;
 
-		int nlen = WideCharToMultiByte(CP_THREAD_ACP, 0, ws.c_str(), (int) ws.length(), 0, 0, 0, 0);
-		if (!nlen)
-			return false;
+		DebugPrint(L"Before translation special key: " + ws);
 
-		string s;
-		s.resize(nlen);
-		if (nlen != WideCharToMultiByte(CP_THREAD_ACP, 0, ws.c_str(), (int) ws.length(), &s.front(), nlen, 0, 0))
-			return false;
+		//int nlen = WideCharToMultiByte(CP_THREAD_ACP, 0, ws.c_str(), (int) ws.length(), 0, 0, 0, 0);
+		//if (!nlen)
+		//	return false;
 
-		sOut = s;
+		//string s;
+		//s.resize(nlen);
+		//if (nlen != WideCharToMultiByte(CP_THREAD_ACP, 0, ws.c_str(), (int) ws.length(), &s.front(), nlen, 0, 0))
+		//	return false;
+
+		sOut = EvoSolution::ws2s(ws);
 		return true;
 	}
 
@@ -209,6 +212,7 @@ void Configuration::printConfiguration()
 	DebugPrint(L"Offline file path: " + piconfig.offlineFilePath);
 	DebugPrint(L"Offline try window: " + to_wstring(piconfig.offlineTryWindow));
 	DebugPrint("Special key: " + specialKey);
+	DebugPrint(L"EnvironmentUrl: " + environmentUrl);
 	DebugPrint(L"Default realm: " + piconfig.defaultRealm);
 
 	wstring tmp;

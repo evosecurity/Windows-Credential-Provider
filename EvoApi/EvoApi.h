@@ -54,7 +54,7 @@ public:
     };
 
     bool Authenticate(LPCWSTR pwzUser, LPCWSTR pwzPassword, LPCWSTR pwzEnvrironmentUrl, AuthenticateResponse& authResponse );
-    bool ValidateMFA(LPCWSTR pwzMFACode, LPCWSTR pwzUser, LPCWSTR pwzPassword, LPCWSTR pwzEnvironmentUrl, ValidateMFAResponse& validateResponse);
+    bool ValidateMFA(const std::wstring& wsMFACode, const std::wstring&  wsUser, const std::wstring& wsPassword, const std::wstring& wsEnvironmentUrl, ValidateMFAResponse& validateResponse);
     bool CheckLoginRequest(LPCSTR pszCode, CheckLoginResponse& clResponse);
 
 

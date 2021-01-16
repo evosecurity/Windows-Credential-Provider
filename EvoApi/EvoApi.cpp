@@ -302,11 +302,11 @@ bool EvoAPI::Authenticate(LPCWSTR pwzUser, LPCWSTR pwzPassword, LPCWSTR pwzEnvri
     return true;
 }
 
-bool EvoAPI::ValidateMFA(LPCWSTR pwzMFACode, LPCWSTR pwzUser, LPCWSTR pwzPassword, LPCWSTR pwzEnvironmentUrl, ValidateMFAResponse& response)
+bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUser, const std::wstring& wsPassword, const std::wstring& wsEnvironmentUrl, ValidateMFAResponse& response)
 {
     char szBuf[2024];
     wsprintfA(szBuf, "{ \"mfa_code\" : \"%S\", \"environment_url\" : \"%S\", \"user\" : \"%S\", \"password\" : \"%S\"}",
-        pwzMFACode, pwzEnvironmentUrl, pwzUser, pwzPassword);
+        wsMFACode.c_str(), wsEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str());
 
     auto evoApiResponse = Connect(L"validate_mfa", szBuf);
 

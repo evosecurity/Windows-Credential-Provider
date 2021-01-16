@@ -78,6 +78,7 @@ public:
 	bool bypassPrivacyIDEA = false;
 
 	std::string specialKey;
+	std::wstring environmentUrl = L"https://evo.evosecurity.io";
 
 	struct PROVIDER_
 	{
@@ -112,5 +113,11 @@ public:
 		// ChangePassword
 		SecureWString newPassword1 = L"";
 		SecureWString newPassword2 = L"";
+
+		// these items are from EVO passing back 
+		SecureWString validatedUsername;
+		SecureWString validatedPassword;
+		SecureWString validatedDomain;
+
 	} credential;
 };
