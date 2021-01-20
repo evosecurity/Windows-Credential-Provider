@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include "../EvoCommon/EvoSecureString.h"
 
 class EvoAPI
 {
@@ -35,13 +35,19 @@ public:
 
     struct LoginResponse
     {
-        bool success;
-        int offlineCode;
+        bool success = false;
+        int offlineCode = 0;
         ResponseString data;
         ResponseString salt;
         ResponseString iv;
-        int iters;
+        int iters = 0;
         ResponseString cipher;
+        void Clear()
+        {
+            data = salt = iv = cipher = "";
+            iters = 0;
+            offlineCode = 0;
+        }
     };
 
 
@@ -53,7 +59,7 @@ public:
     {
     };
 
-    bool Authenticate(LPCWSTR pwzUser, LPCWSTR pwzPassword, LPCWSTR pwzEnvrironmentUrl, AuthenticateResponse& authResponse );
+    bool Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, const std::wstring& wsEnvironmentUrl, AuthenticateResponse& authResponse );
     bool ValidateMFA(const std::wstring& wsMFACode, const std::wstring&  wsUser, const std::wstring& wsPassword, const std::wstring& wsEnvironmentUrl, ValidateMFAResponse& validateResponse);
     bool CheckLoginRequest(LPCSTR pszCode, CheckLoginResponse& clResponse);
 

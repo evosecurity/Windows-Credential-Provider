@@ -1,10 +1,12 @@
 #include "pch.h"
 #include "EvoSecureString.h"
 #include "EvoSolution.h"
+#include "../EvoApi/EvoApi.h"
 #include <codecvt>
 #include <thread>
 #include "Logger.h"
-
+	
+using namespace std;
 
 void EvoSolution::Initialize(PICONFIG conf)
 {
@@ -39,6 +41,55 @@ bool EvoSolution::stopPoll()
 	DebugPrint("Stopping poll thread...");
 	_runPoll.store(false);
 	return true;
+}
+
+void EvoSolution::asyncEvoPoll(std::string transaction_id, std::function<void(bool)> callback)
+{
+	_runPoll.store(true);
+	std::thread t(&EvoSolution::pollEvoThread, this, transaction_id, callback);
+	t.detach();
+}
+
+void EvoSolution::pollEvoThread(const std::string& transaction_id, std::function<void(bool)> callback)
+{
+	DebugPrint("Starting pollEvoThread()");
+
+	this_thread::sleep_for(chrono::milliseconds(100));
+
+	bool success = false;
+	EvoAPI::CheckLoginResponse response;
+	while (_runPoll.load())
+	{
+		EvoAPI evoApi;
+
+		if (evoApi.CheckLoginRequest(transaction_id.c_str(), response))
+		{
+			_runPoll.store(false);
+			success = true;
+			break;
+		}
+		this_thread::sleep_for(chrono::milliseconds(500));
+	}
+
+	if (success)
+	{
+		try
+		{
+			m_PollResults.data = response.data;
+			m_PollResults.iters = response.iters;
+			m_PollResults.iv = response.iv;
+			m_PollResults.salt = response.salt;
+			m_PollResults.offlineCode = response.offlineCode;
+			callback(response.success);
+		}
+		catch (...)
+		{
+			callback(false);
+		}
+	}
+
+
+	DebugPrint("Ending pollEvoThread()");
 }
 
 int EvoSolution::getLastError()

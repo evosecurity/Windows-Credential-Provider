@@ -283,10 +283,10 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
     return evoApiResponse;
 }
 
-bool EvoAPI::Authenticate(LPCWSTR pwzUser, LPCWSTR pwzPassword, LPCWSTR pwzEnvrironmentUrl, AuthenticateResponse& response)
+bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, const std::wstring& wsEnvironmentUrl, AuthenticateResponse& response)
 {
     char szBuf[2024];
-    wsprintfA(szBuf, "{\"user\":\"%S\",\"password\":\"%S\",\"environment_url\":\"%S\"}", pwzUser, pwzPassword, pwzEnvrironmentUrl);
+    wsprintfA(szBuf, "{\"user\":\"%S\",\"password\":\"%S\",\"environment_url\":\"%S\"}", wsUser.c_str(), wsPassword.c_str(), wsEnvironmentUrl.c_str());
 
     auto evoApiResponse = Connect(L"authenticate", szBuf);
     if (evoApiResponse.dwStatus != HTTP_STATUS_OK)

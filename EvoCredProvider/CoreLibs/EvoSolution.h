@@ -28,6 +28,12 @@ public:
 	void asyncPollTransaction(std::string username, std::string transaction_id, std::function<void(bool)> callback);
 
 
+	// Evo poll threads
+	void asyncEvoPoll(std::string transaction_id, std::function<void(bool)> callback);
+	void pollEvoThread(const std::string& transaction_id, std::function<void(bool)> callback);
+
+
+
 	int getLastError();
 	std::wstring getLastErrorMessage();
 
@@ -44,6 +50,13 @@ private:
 	int _lastError = 0;
 	std::string _lastErrorMessage;
 
+public:
+	struct PollResults
+	{
+		std::string data, iv, salt;
+		int iters = 0;
+		int offlineCode = 0;
+	} m_PollResults;
 
 };
 

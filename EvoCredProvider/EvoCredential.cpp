@@ -556,7 +556,7 @@ HRESULT CEvoCredential::ConnectOrig(IQueryContinueWithStatus* pqcws)
 					{
 						// When polling finishes, pushAuthenticationCallback is invoked with the finialization success value
 						_privacyIDEA.asyncPollTransaction(EvoSolution::ws2s(m_config->credential.username), c.transaction_id,
-							std::bind(&CEvoCredential::PushAuthenticationCallback, this, std::placeholders::_1));
+							std::bind(&CEvoCredential::PushAuthenticationCallbackOrig, this, std::placeholders::_1));
 					}
 				}
 				else
@@ -595,8 +595,50 @@ HRESULT CEvoCredential::ConnectOrig(IQueryContinueWithStatus* pqcws)
 	return S_OK; // always S_OK
 }
 
+bool GetCredsFromPayload(std::string data, std::string salt, std::string iv, std::shared_ptr<Configuration> config,
+	SecureWString& user, SecureWString& pw, SecureWString& domain)
+{
+	try
+	{
+		DebugPrint("Special key: " + config->specialKey);
+		secure_string sData = RubyDecode(data, salt, iv, config->specialKey);
+		if (sData.length() == 0)
+			return false;
+
+		///  TODO: need to create secure versions of these ???
+		SecureWString wData = EvoSolution::s2ws(sData.c_str()).c_str();
+
+		size_t find = wData.find(',');
+		if (find == wData.npos)
+			return false;
+
+		SecureWString userAndDomain = wData.substr(0, find);
+		pw = wData.substr(find + 1);
+
+		find = userAndDomain.find('\\');
+		if (find != userAndDomain.npos)
+		{
+			domain = userAndDomain.substr(0, find);
+			user = userAndDomain.substr(find + 1);
+		}
+		else
+		{
+			user = userAndDomain;
+			domain = L"";
+		}
+
+		return true;
+	}
+	catch (...)
+	{
+
+	}
+	return false;
+}
+
 bool GetCredsFromPayload(EvoAPI::LoginResponse& response, std::shared_ptr<Configuration> config, SecureWString& user, SecureWString& pw, SecureWString& domain)
 {
+#if 0
 	try
 	{
 		DebugPrint("Special key: " + config->specialKey);
@@ -633,6 +675,9 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, std::shared_ptr<Config
 
 	}
 	return false;
+#endif
+
+	return GetCredsFromPayload(response.data, response.salt, response.iv, config, user, pw, domain);
 }
 
 
@@ -651,9 +696,51 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	if (IsAccountExcluded())
 		return S_OK;
 
+	//  way we're using it is different
+	if (m_config->bypassPrivacyIDEA)
+	{
+		DebugPrint("Bypassing privacyIDEA...");
+		m_config->bypassPrivacyIDEA = false;
+
+		SecureWString user, pw, domain;
+		if (GetCredsFromPayload(_privacyIDEA.m_PollResults.data, _privacyIDEA.m_PollResults.salt, _privacyIDEA.m_PollResults.iv, m_config,
+			user, pw, domain))
+		{
+			m_config->credential.validatedDomain = domain;
+			m_config->credential.validatedPassword = pw;
+			m_config->credential.validatedUsername = user;
+
+			_piStatus = EVOSOL_AUTH_SUCCESS;
+
+#ifdef _DEBUG
+			wstring s(L"Payload user: ");
+			s += wstring(user.c_str());
+			DebugPrint(s);
+
+			s = L"Payload pw: ";
+			s += wstring(pw.c_str());
+			DebugPrint(s);
+
+			s = L"Payload domain: ";
+			s += wstring(domain.c_str());
+			DebugPrint(s);
+#endif
+		}
+
+		return S_OK;
+	}
+
 	if (m_config->twoStepHideOTP && !m_config->isSecondStep) {
 		// is first step
 		DebugPrint("Connect First step");
+
+		EvoAPI::AuthenticateResponse response;
+		EvoAPI evoApi;
+		if (evoApi.Authenticate(m_config->credential.username, m_config->credential.password, m_config->environmentUrl, response))
+		{
+			_privacyIDEA.asyncEvoPoll(response.request_id, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
+		}
+
 	}
 	else if (m_config->twoStepHideOTP && m_config->isSecondStep) {
 		// is second step
@@ -701,7 +788,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	DebugPrint("END Connect");
 	return S_OK;
 }
-void CEvoCredential::PushAuthenticationCallback(bool success)
+void CEvoCredential::PushAuthenticationCallbackOrig(bool success)
 {
 	DebugPrint(__FUNCTION__);
 	if (success)
@@ -709,6 +796,18 @@ void CEvoCredential::PushAuthenticationCallback(bool success)
 		m_config->pushAuthenticationSuccessful = true;
 		m_config->doAutoLogon = true;
 		// When autologon is triggered, connect is called instantly, therefore bypass privacyIDEA on next run
+		m_config->bypassPrivacyIDEA = true;
+		m_config->provider.pCredentialProviderEvents->CredentialsChanged(m_config->provider.upAdviseContext);
+	}
+}
+
+void CEvoCredential::PushEvoAuthenticationCallback(bool success)
+{
+	DebugPrint(__FUNCTION__);
+	if (success)
+	{
+		m_config->pushAuthenticationSuccessful = true;
+		m_config->doAutoLogon = true;
 		m_config->bypassPrivacyIDEA = true;
 		m_config->provider.pCredentialProviderEvents->CredentialsChanged(m_config->provider.upAdviseContext);
 	}
