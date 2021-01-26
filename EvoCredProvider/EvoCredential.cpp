@@ -239,6 +239,8 @@ HRESULT CEvoCredential::GetStringValue(DWORD dwFieldID, PWSTR* ppwsz)
 	return hr;
 }
 
+HBITMAP LoadPNG(HINSTANCE hInstance, UINT id); // extern, in LoadPNG.cpp
+
 HRESULT CEvoCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
 {
 	DebugPrint(__FUNCTION__);
@@ -247,30 +249,41 @@ HRESULT CEvoCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
 	if ((FID_LOGO == dwFieldID) && phbmp)
 	{
 		HBITMAP hbmp = nullptr;
-		LPCSTR lpszBitmapPath = EvoSolution::ws2s(m_config->bitmapPath).c_str();
+		LPCTSTR lpszBitmapPath = m_config->bitmapPath.c_str();
 		DebugPrint(lpszBitmapPath);
 
 		if (NOT_EMPTY(lpszBitmapPath))
 		{
-			DWORD const dwAttrib = GetFileAttributesA(lpszBitmapPath);
+			DWORD const dwAttrib = GetFileAttributes(lpszBitmapPath);
 
 			DebugPrint(dwAttrib);
 
 			if (dwAttrib != INVALID_FILE_ATTRIBUTES
 				&& !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY))
 			{
-				hbmp = (HBITMAP)LoadImageA(nullptr, lpszBitmapPath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+				hbmp = (HBITMAP)LoadImage(nullptr, lpszBitmapPath, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE|LR_LOADTRANSPARENT);
 
 				if (hbmp == nullptr)
 				{
+					DebugPrint(L"Error loading image: " + m_config->bitmapPath);
 					DebugPrint(GetLastError());
 				}
+				else
+				{
+					DebugPrint(wstring(L"Using loaded image: ") + m_config->bitmapPath);
+				}
 			}
+			else DebugPrint("Something invalid");
 		}
 
 		if (hbmp == nullptr)
 		{
-			hbmp = LoadBitmap(_AtlBaseModule.GetModuleInstance(), MAKEINTRESOURCE(IDB_TILE_IMAGE));
+			hbmp = LoadPNG(_AtlBaseModule.GetModuleInstance(), IDB_TILE_PNG);
+			if (hbmp == nullptr)
+			{
+				DebugPrint("Loading alternate bitmap");
+				hbmp = LoadBitmap(_AtlBaseModule.GetModuleInstance(), MAKEINTRESOURCE(IDB_TILE_IMAGE));
+			}
 		}
 
 		if (hbmp != nullptr)

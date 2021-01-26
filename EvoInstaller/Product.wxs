@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+**
+** Copyright	2012 Dominik Pretzsch
+**				    2017 NetKnights GmbH
+**
+** Author		  Dominik Pretzsch
+**				    Nils Behlen
+**
+**    Licensed under the Apache License, Version 2.0 (the "License");
+**    you may not use this file except in compliance with the License.
+**    You may obtain a copy of the License at
+**
+**        http://www.apache.org/licenses/LICENSE-2.0
+**
+**    Unless required by applicable law or agreed to in writing, software
+**    distributed under the License is distributed on an "AS IS" BASIS,
+**    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+**    See the License for the specific language governing permissions and
+**    limitations under the License.
+**
+** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include $(sys.CURRENTDIR)\Config.wxi?>
+  
+  <!-- Preconditions and pre-setups -->
+  <Product Id="*" Language="1033"
+           Name="$(var.ProductName)"
+           Manufacturer="$(var.Publisher)"
+           Version="$(var.Version)"
+           UpgradeCode="a857e24b-638d-4a2e-b525-49e3d51de74d">
+
+    <Package Id="*" InstallerVersion="405" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated"
+             Manufacturer="$(var.Publisher)"
+             Description="$(var.ProductName) $(var.Version) Setup" />
+
+    <MajorUpgrade AllowDowngrades="no" AllowSameVersionUpgrades="yes" MigrateFeatures="yes" DowngradeErrorMessage="A newer version is already installed!" />
+    
+    <Property Id="ARPURLINFOABOUT" Value="$(var.AppURLInfoAbout)" />
+    <!--
+    <Property Id="ARPNOREPAIR" Value="yes" Secure="yes" />-->
+    <!-- Disable the modify button in software explorer -->
+    <Property Id="ARPNOMODIFY" Value="yes" Secure="yes" />
+    
+    <Condition Message="You need to be an administrator to install this product.">
+      Privileged
+    </Condition>
+   
+    <!-- Custom action definitions -->
+    <CustomAction Id='IsPrivileged' Error='You must be an admin to install this product' />
+    <CustomAction Id="PreventDowngrading" Error="Newer version already installed." />
+    <!-- END Custom action definitions-->
+    
+    <InstallExecuteSequence>
+      <Custom Action='IsPrivileged' Before='AppSearch'>
+        Not Privileged
+      </Custom>
+    </InstallExecuteSequence>
+   
+    <!-- Icons etc -->
+    <Icon Id="icon.ico" SourceFile="$(var.SolutionDir)InstallerMedia\icon.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+    
+    <Media Id='1' Cabinet='Sample.cab' EmbedCab='yes' DiskPrompt='DISK #1' />
+    <Property Id='DiskPrompt' Value="$(var.ProductName) Setup [1]" />
+
+    <!--<Binary Id='WiXCustomActions' SourceFile='$(var.WiXCustomActions.TargetPath)' />-->
+    
+    <Binary Id='InfoIcon' SourceFile='$(var.SolutionDir)InstallerMedia\info.ico' />
+    <Binary Id='HelpIcon' SourceFile='$(var.SolutionDir)InstallerMedia\help.ico' />
+    <Binary Id='ExclamIcon' SourceFile='$(var.SolutionDir)InstallerMedia\exclam.ico' />
+    <!-- END  Icons etc -->
+    <!-- END Preconditions and pre-setups -->
+
+    <!-- Get values from registry if available. (What if unattended/silent install?)-->
+    <Property Id="HOSTNAME" Value = "api.evosecurity.com">
+      <RegistrySearch Id="SearchHostname"              Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="hostname"               Win64="$(var.Win64)" Type="raw"/>
+    </Property>
+
+    <Property Id="PATH" Value = "/api/v1/desktop/">
+      <RegistrySearch Id="SearchPath"              Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="path"               Win64="$(var.Win64)" Type="raw"/>
+    </Property>
+
+    <Property Id="LOGIN_TEXT">
+      <RegistrySearch Id="SearchLoginText"              Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="login_text"               Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="OTP_TEXT">
+      <RegistrySearch Id="SearchOTPText"              Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="otp_text"               Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="V1_BITMAP_PATH">
+      <RegistrySearch Id="SearchV1BitmapPath"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="v1_bitmap_path"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="TWO_STEP_HIDE_OTP">
+      <RegistrySearch Id="SearchTwoStepHideOTP"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="two_step_hide_otp"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="TWO_STEP_SEND_PASSWORD">
+      <RegistrySearch Id="SearchTwoStepSendPassword"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="two_step_send_password"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="TWO_STEP_EMPTY_SEND_PASSWORD">
+      <RegistrySearch Id="SearchTwoStepSendEmptyPassword"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="two_step_send_empty_password"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+    
+    <Property Id="SSL_IGNORE_UNKNOWN_CA">
+      <RegistrySearch Id="SearchSSLIgnoreUnknownCA"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_unknown_ca"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="SSL_IGNORE_INVALID_CN">
+      <RegistrySearch Id="SearchSSLIgnoreInvalidCN"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_invalid_cn"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="HIDE_USERNAME">
+      <RegistrySearch Id="SearchHideUsername"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="hide_username"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="HIDE_DOMAINNAME">
+      <RegistrySearch Id="SearchHideDomainname"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="hide_domainname"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    <Property Id="RELEASE_LOG">
+      <RegistrySearch Id="SearchProdLog"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="release_log"           Win64="$(var.Win64)" Type="raw" />
+    </Property>
+
+    
+    <!-- Disabled:
+    <Property Id="TIMEOUT">
+      <RegistrySearch Id="SearchTimeout"                Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="timeout"                  Win64="$(var.Win64)" Type="raw" />
+    </Property>    
+    -->
+    <!-- END Get registry values -->
+    
+    <!-- Sanitize SOAP_TIMEOUT DWORD-value (e.g. #123 -> 123) -//->
+    <Property Id="SANITIZE_DWORD" Value="SOAP_TIMEOUT" />
+    <CustomAction Id='SanitizeSoapTimeoutDword' BinaryKey='WiXCustomActions' DllEntry='SanitizeDwordFromRegistry' Execute='firstSequence'/>
+    <InstallUISequence>
+      <Custom Action='SanitizeSoapTimeoutDword' After='CostFinalize'>Installed</Custom>
+    </InstallUISequence>
+    <!-//- END Sanitize SOAP_TIMEOUT DWORD-value -->
+
+    <!-- Directory definitions -->   
+    <Directory Id="TARGETDIR" Name="SourceDir">      
+      <!-- Visual Studio C++ Redistributable -->
+      <?if $(var.Configuration) = Debug ?>
+        <?if $(var.Platform) = x64 ?>
+          <Merge Id="VCRedist" SourceFile="$(var.SolutionDir)InstallerMedia\Microsoft_VC142_DebugCRT_x64.msm" DiskId="1" Language="0"/>
+        <?else ?>
+          <Merge Id="VCRedist" SourceFile="$(var.SolutionDir)InstallerMedia\Microsoft_VC142_DebugCRT_x86.msm" DiskId="1" Language="0"/>
+        <?endif ?>
+      <?else ?>
+        <?if $(var.Platform) = x64 ?>
+          <Merge Id="VCRedist" SourceFile="$(var.SolutionDir)InstallerMedia\Microsoft_VC142_CRT_x64.msm" DiskId="1" Language="0"/>
+        <?else ?>
+          <Merge Id="VCRedist" SourceFile="$(var.SolutionDir)InstallerMedia\Microsoft_VC142_CRT_x86.msm" DiskId="1" Language="0"/>
+        <?endif ?>
+      <?endif ?>
+      <!-- END Visual Studio C++ Redistributable -->
+
+      <!-- Directories/Components to be placed in ProgramFiles-folder -->
+      <Directory Id="$(var.PlatformProgramFilesFolder)">
+        <Directory Id="CompanyFolder" Name="$(var.Publisher)">
+          <Directory Id="INSTALLFOLDER" Name="$(var.ProductFolderName)">
+            
+            <Component Id="DefaultFilesInProgrammFolder" Location="local" Guid="9d02dffe-1766-420c-97b5-755979b68205">
+              <!-- Files -->
+              <File Id="LicenseFile"
+                    Name="ApacheLicense.rtf"
+                    Source="$(var.SolutionDir)InstallerMedia\ApacheLicense.rtf"
+                    KeyPath="yes" />
+
+              <RemoveFile Id="RemoveInstallFiles" Name="*" On="uninstall"/>
+              <!-- END Files -->
+              <!-- Folders -->
+              <RemoveFolder Id="RemoveInstallFolder" On="uninstall"/>
+              <RemoveFolder Id="RemoveCompanyFolderIfEmpty" Directory="CompanyFolder" On="uninstall"/>
+              <!-- END Folders -->              
+            </Component>
+            
+          </Directory>
+        </Directory>
+      </Directory>
+      <!-- END Directories/Components to be placed in ProgramFiles-folder -->
+
+      <!-- Directories/Components to be placed in System-folder -->
+      <Directory Id="$(var.PlatformSystemFolder)">
+        
+        <!-- Core components -->   
+        <Component Location="local" Guid="d5addec1-c1ad-4fc7-a8a9-c26dc68ce14e" Transitive="yes">
+          <Condition>1</Condition>
+          <!-- Files -->
+          <File Id="EvoCredProvider"
+                Name="PrivacyIDEA$(var.EvoCredProvider.TargetFileName)"
+                Source="$(var.EvoCredProvider.TargetPath)"
+                KeyPath="yes" />
+
+          <RemoveFile Id="RemoveCredentialProviderFiles" Name="PrivacyIDEA$(var.EvoCredProvider.TargetFileName)" On="uninstall"/>
+          <!-- END Files -->
+
+          <!-- Registry -->
+          <RegistryKey Root='HKCR' Key='CLSID\{$(var.ProviderRegistryGUID)}' ForceCreateOnInstall='yes'>
+            <RegistryValue Type='string' Value='PrivacyIDEA$(var.EvoCredProvider.TargetName)' />
+            <RegistryKey Key='InprocServer32'>
+              <!--<RegistryValue Type='string' Value='PrivacyIDEA$(var.EvoCredProvider.TargetFileName)' />-->
+				<RegistryValue Type='string' Value='[INSTALLFOLDER]PrivacyIDEA$(var.EvoCredProvider.TargetFileName)' />
+				<RegistryValue Name='ThreadingModel' Type='string' Value='Apartment' />
+            </RegistryKey>
+          </RegistryKey>
+
+          <RegistryValue Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{$(var.ProviderRegistryGUID)}' Type='string' Value='PrivacyIDEA$(var.EvoCredProvider.TargetName)' />
+          <RemoveRegistryKey Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{$(var.ProviderRegistryGUID)}' Action='removeOnUninstall'/>
+
+          <!-- Configuration values (from dialogs/registry/unattended) -->
+
+          <RegistryKey Root='HKLM' Key='SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)' ForceCreateOnInstall='yes' >
+            <RegistryValue Name='hostname'              Type='string'  Value='[HOSTNAME]'           />
+            <RegistryValue Name='path'                  Type='string'  Value='[PATH]'           />
+            <RegistryValue Name='login_text'            Type='string'  Value='[LOGIN_TEXT]'           />
+            <RegistryValue Name='otp_text'              Type='string'  Value='[OTP_TEXT]'           />
+            
+            <RegistryValue Name='v1_bitmap_path'        Type='string'  Value='[V1_BITMAP_PATH]' />
+            
+            <RegistryValue Name='two_step_hide_otp'     Type ='integer' Value='[TWO_STEP_HIDE_OTP]' />
+            <RegistryValue Name='two_step_send_password' Type='integer' Value='[TWO_STEP_SEND_PASSWORD]' />
+            <RegistryValue Name='two_step_send_empty_password' Type='integer' Value='[TWO_STEP_SEND_EMPTY_PASSWORD]' />
+            
+            <RegistryValue Name='ssl_ignore_unknown_ca' Type='integer' Value='[SSL_IGNORE_UNKNOWN_CA]' />
+            <RegistryValue Name='ssl_ignore_invalid_cn' Type='integer' Value='[SSL_IGNORE_INVALID_CN]' />
+
+            <RegistryValue Name='hide_fullname'       Type='integer' Value='[HIDE_FULLNAME]' />
+            <RegistryValue Name='hide_domainname'     Type='integer' Value='[HIDE_DOMAINNAME]' />
+            <RegistryValue Name='release_log'         Type='integer' Value='[RELEASE_LOG]' />
+            
+            <!-- Disabled:
+            <RegistryValue Name='timeout'               Type='integer' Value='[TIMEOUT]' />
+            -->
+          </RegistryKey>
+          <!-- END Configuration values -->
+          <!-- END Registry -->
+          
+        </Component>
+        <!-- END Core components -->
+        
+        <!-- ProviderFilter component -->
+		  <!--Component Location="local" Guid="1f330cbc-6cf9-4ba2-b09e-0a5b1022ca43"> TODO: JOE
+          <File Id="CredentialProviderFilter"
+                Name="PrivacyIDEA$(var.CredentialProviderFilter.TargetFileName)"
+                Source="$(var.CredentialProviderFilter.TargetPath)"
+                KeyPath="yes" />
+
+          <RemoveFile Id="RemoveCredentialProviderFilterFiles" Name="PrivacyIDEA$(var.CredentialProviderFilter.TargetFileName)" On="uninstall" />
+
+          <RegistryKey Root='HKCR' Key='CLSID\{$(var.ProviderFilterRegistryGUID)}' ForceCreateOnInstall='yes'>
+            <RegistryValue Type='string' Value='PrivacyIDEA$(var.CredentialProviderFilter.TargetName)' />
+            <RegistryKey Key='InprocServer32'>
+              <RegistryValue Type='string' Value='PrivacyIDEA$(var.CredentialProviderFilter.TargetFileName)' />
+              <RegistryValue Name='ThreadingModel' Type='string' Value='Apartment' />
+            </RegistryKey>
+          </RegistryKey>         
+        </Component-->
+        <!-- END ProviderFilter component -->
+
+        <!-- Activate ProviderFilter (InstallAsDefault) component -->
+		  <!--Component Id="ActivateCredentialProviderFilter" Location="local" Guid="7b1f409b-054a-449b-8411-7729c929e58e"> TODO: JOE
+          <RegistryValue Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Provider Filters\{$(var.ProviderFilterRegistryGUID)}' Type='string' Value='PrivacyIDEA$(var.CredentialProviderFilter.TargetName)' KeyPath='yes' />
+          <RemoveRegistryKey Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Provider Filters\{$(var.ProviderFilterRegistryGUID)}' Action='removeOnUninstall'/>
+        </Component-->
+        <!-- END Activate ProviderFilter component -->
+        
+      </Directory>
+      <!-- END Directories/Components to be placed in System-folder -->
+      
+    </Directory>
+    <!-- END Directory definitions -->
+
+    <!-- Feature definitions -->
+    <Feature Id='Complete' Title='$(var.ProductName)' Description='Full install' Display='expand' Level='1' ConfigurableDirectory='INSTALLFOLDER' AllowAdvertise='no' Absent='disallow' InstallDefault="local">
+      <Feature Id='MainInstall' Title='Core components' Description='Core $(var.ProductName) components' Level='1' AllowAdvertise='no' Absent='disallow' InstallDefault="local">
+        <ComponentRef Id='EvoCredProvider' />
+		  <!--ComponentRef Id='CredentialProviderFilter' / TODO:JOE  -->
+      </Feature>
+
+		<!--Feature Id='InstallAsDefault' Title='Default provider' Description='Install $(var.ProductName) as default provider. No other provider will be allowed to be used for logon.' Level='1000' AllowAdvertise='no' InstallDefault="local">
+        <ComponentRef Id='ActivateCredentialProviderFilter' />
+      </Feature  TODO: JOE-->
+
+      <!-- These are installed anyway: -->
+      <Feature Id="VCRedist" Title="Visual C++ Runtime" AllowAdvertise="no" Display="hidden" Level="1">
+        <MergeRef Id='VCRedist'/>
+      </Feature>
+      
+      <ComponentRef Id='DefaultFilesInProgrammFolder' />
+    </Feature>
+    <!-- END Feature definitions -->
+
+    <!-- WiX Configuration -->
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.SolutionDir)InstallerMedia\ApacheLicense.rtf" />
+    
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.SolutionDir)InstallerMedia\header.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.SolutionDir)InstallerMedia\setup-screen.bmp" />
+    <!-- END WiX Configuration -->
+
+    <!-- UI Configuration -->
+    <UI Id="MyWixUI_FeatureTree">
+      <UIRef Id="WixUI_FeatureTree"/>
+
+      <!-- Custom dialogs -->
+      <DialogRef Id="ServerConfigurationDlg" />
+      <DialogRef Id="UserConfigurationDlg" />
+      <!--
+      <DialogRef Id="SecurityConfigurationDlg" />
+      //-->
+
+      <!-- Queue custom dialogs start/end -->
+      <!-- Start -->
+      <Publish Dialog="CustomizeDlg" Control="Next" Event="NewDialog" Value="ServerConfigurationDlg">1</Publish>
+      <!-- End -->
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="ServerConfigurationDlg" Order="1">NOT Installed OR (WixUI_InstallMode = "Change" AND USER_IS_ADMINISTRATOR = "1" )</Publish>
+      <!-- END Queue custom dialogs -->
+    </UI>
+    <!-- END UI Configuration -->
+
+    </Product>
+</Wix>

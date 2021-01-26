@@ -54,15 +54,6 @@ public:
 
 		DebugPrint(L"Before translation special key: " + ws);
 
-		//int nlen = WideCharToMultiByte(CP_THREAD_ACP, 0, ws.c_str(), (int) ws.length(), 0, 0, 0, 0);
-		//if (!nlen)
-		//	return false;
-
-		//string s;
-		//s.resize(nlen);
-		//if (nlen != WideCharToMultiByte(CP_THREAD_ACP, 0, ws.c_str(), (int) ws.length(), &s.front(), nlen, 0, 0))
-		//	return false;
-
 		sOut = EvoSolution::ws2s(ws);
 		return true;
 	}

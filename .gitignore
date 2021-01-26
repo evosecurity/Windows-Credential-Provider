@@ -341,3 +341,4 @@ healthchecksdb
 /Debug-x64
 /EvoCredProvider/EvoCredProvider_i.h
 /EvoCredProvider/TestCredProvider_i.h
+/Release-x64
