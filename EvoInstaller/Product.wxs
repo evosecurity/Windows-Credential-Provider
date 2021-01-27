@@ -76,61 +76,78 @@
 
     <!-- Get values from registry if available. (What if unattended/silent install?)-->
     <Property Id="HOSTNAME" Value = "api.evosecurity.com">
-      <RegistrySearch Id="SearchHostname"              Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="hostname"               Win64="$(var.Win64)" Type="raw"/>
+      <RegistrySearch Id="SearchHostname"              Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="hostname"               Win64="$(var.Win64)" Type="raw"/>
     </Property>
 
     <Property Id="PATH" Value = "/api/v1/desktop/">
-      <RegistrySearch Id="SearchPath"              Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="path"               Win64="$(var.Win64)" Type="raw"/>
+      <RegistrySearch Id="SearchPath"              Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="path" Win64="$(var.Win64)" Type="raw"/>
     </Property>
 
+	  <Property Id="APIKEY" Value="mvXcphkyhzAGYtFgtFtR5k7TVh9mk7PL">
+		  <RegistrySearch Id="SearchSpecialKey" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="specialKey" Win64="$(var.Win64)" Type="raw"/>
+	  </Property>
+
     <Property Id="LOGIN_TEXT">
-      <RegistrySearch Id="SearchLoginText"              Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="login_text"               Win64="$(var.Win64)" Type="raw" />
+      <RegistrySearch Id="SearchLoginText"              Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="login_text"               Win64="$(var.Win64)" Type="raw" />
     </Property>
 
     <Property Id="OTP_TEXT">
-      <RegistrySearch Id="SearchOTPText"              Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="otp_text"               Win64="$(var.Win64)" Type="raw" />
+      <RegistrySearch Id="SearchOTPText"              Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="otp_text"               Win64="$(var.Win64)" Type="raw" />
     </Property>
 
     <Property Id="V1_BITMAP_PATH">
-      <RegistrySearch Id="SearchV1BitmapPath"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="v1_bitmap_path"           Win64="$(var.Win64)" Type="raw" />
+      <RegistrySearch Id="SearchV1BitmapPath"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="v1_bitmap_path"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
-    <Property Id="TWO_STEP_HIDE_OTP">
-      <RegistrySearch Id="SearchTwoStepHideOTP"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="two_step_hide_otp"           Win64="$(var.Win64)" Type="raw" />
+    <!--<Property Id="TWO_STEP_HIDE_OTP" Value="1">
+      <RegistrySearch Id="SearchTwoStepHideOTP"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_hide_otp"           Win64="$(var.Win64)" Type="raw" />
+    </Property>-->
+
+    <!--<Property Id="TWO_STEP_SEND_PASSWORD">
+      <RegistrySearch Id="SearchTwoStepSendPassword"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_send_password"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
-    <Property Id="TWO_STEP_SEND_PASSWORD">
-      <RegistrySearch Id="SearchTwoStepSendPassword"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="two_step_send_password"           Win64="$(var.Win64)" Type="raw" />
-    </Property>
-
-    <Property Id="TWO_STEP_EMPTY_SEND_PASSWORD">
-      <RegistrySearch Id="SearchTwoStepSendEmptyPassword"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="two_step_send_empty_password"           Win64="$(var.Win64)" Type="raw" />
-    </Property>
+    <Property Id="TWO_STEP_EMPTY_SEND_PASSWORD" >
+      <RegistrySearch Id="SearchTwoStepSendEmptyPassword"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_send_empty_password"           Win64="$(var.Win64)" Type="raw" />
+    </Property>-->
     
-    <Property Id="SSL_IGNORE_UNKNOWN_CA">
-      <RegistrySearch Id="SearchSSLIgnoreUnknownCA"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_unknown_ca"           Win64="$(var.Win64)" Type="raw" />
+    <Property Id="SSL_IGNORE_UNKNOWN_CA" >
+      <RegistrySearch Id="SearchSSLIgnoreUnknownCA"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_unknown_ca"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
-    <Property Id="SSL_IGNORE_INVALID_CN">
-      <RegistrySearch Id="SearchSSLIgnoreInvalidCN"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_invalid_cn"           Win64="$(var.Win64)" Type="raw" />
+    <Property Id="SSL_IGNORE_INVALID_CN" >
+      <RegistrySearch Id="SearchSSLIgnoreInvalidCN"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_invalid_cn"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
-    <Property Id="HIDE_USERNAME">
-      <RegistrySearch Id="SearchHideUsername"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="hide_username"           Win64="$(var.Win64)" Type="raw" />
+    <!--<Property Id="HIDE_USERNAME">
+      <RegistrySearch Id="SearchHideUsername"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="hide_username"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
     <Property Id="HIDE_DOMAINNAME">
-      <RegistrySearch Id="SearchHideDomainname"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="hide_domainname"           Win64="$(var.Win64)" Type="raw" />
-    </Property>
+      <RegistrySearch Id="SearchHideDomainname"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="hide_domainname"           Win64="$(var.Win64)" Type="raw" />
+    </Property>-->
 
     <Property Id="RELEASE_LOG">
-      <RegistrySearch Id="SearchProdLog"           Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="release_log"           Win64="$(var.Win64)" Type="raw" />
+      <RegistrySearch Id="SearchProdLog"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="release_log"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
-    
-    <!-- Disabled:
+
+	  <!--<SetProperty></SetProperty>-->
+	  <Property Id="YIKES"  Value="1" />
+
+	  <!--<CustomAction Id="FixRegs" Property="YIKES" Value="0">
+	  </CustomAction>-->
+
+
+	  <!--<SetProperty Action="FixRegs" Id="YIKES" Value="0"  Before="WriteRegistryValues" Sequence="execute">![CDATA[SSL_IGNORE_UNKNOWN_CA=1]]</SetProperty>-->
+
+	  <!--<InstallExecuteSequence>
+		  <Custom Action="FixRegs" Before="WriteRegistryValues" />
+	  </InstallExecuteSequence>-->
+
+	  <!-- Disabled:
     <Property Id="TIMEOUT">
-      <RegistrySearch Id="SearchTimeout"                Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="timeout"                  Win64="$(var.Win64)" Type="raw" />
+      <RegistrySearch Id="SearchTimeout"                Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="timeout"                  Win64="$(var.Win64)" Type="raw" />
     </Property>    
     -->
     <!-- END Get registry values -->
@@ -163,7 +180,7 @@
 
       <!-- Directories/Components to be placed in ProgramFiles-folder -->
       <Directory Id="$(var.PlatformProgramFilesFolder)">
-        <Directory Id="CompanyFolder" Name="$(var.Publisher)">
+        <Directory Id="CompanyFolder" Name="$(var.ShortPublisher)">
           <Directory Id="INSTALLFOLDER" Name="$(var.ProductFolderName)">
             
             <Component Id="DefaultFilesInProgrammFolder" Location="local" Guid="9d02dffe-1766-420c-97b5-755979b68205">
@@ -180,15 +197,24 @@
               <RemoveFolder Id="RemoveCompanyFolderIfEmpty" Directory="CompanyFolder" On="uninstall"/>
               <!-- END Folders -->              
             </Component>
-            
-          </Directory>
+			<!--<Component Location="local" Guid="9b4ad2a9-bf9a-42a1-b1a0-6a7be313e06c" Transitive="yes">
+				<Condition>1</Condition>
+				<File Id="EvoCredProviderDll"
+					Name="$(var.EvoCredProvider.TargetFileName)"
+					Source="$(var.EvoCredProvider.TargetPath)"
+					KeyPath="yes" />
+				<RemoveFile Id="RemoveEvoCredProviderDll" Name="$(var.EvoCredProvider.TargetFileName)" On="uninstall"/>
+
+			</Component>-->
+
+		  </Directory>
         </Directory>
       </Directory>
       <!-- END Directories/Components to be placed in ProgramFiles-folder -->
 
-      <!-- Directories/Components to be placed in System-folder -->
+		<!-- Directories/Components to be placed in System-folder -->
       <Directory Id="$(var.PlatformSystemFolder)">
-        
+
         <!-- Core components -->   
         <Component Location="local" Guid="d5addec1-c1ad-4fc7-a8a9-c26dc68ce14e" Transitive="yes">
           <Condition>1</Condition>
@@ -216,24 +242,25 @@
 
           <!-- Configuration values (from dialogs/registry/unattended) -->
 
-          <RegistryKey Root='HKLM' Key='SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)' ForceCreateOnInstall='yes' >
+          <RegistryKey Root='HKLM' Key='SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)' ForceCreateOnInstall='yes' >
             <RegistryValue Name='hostname'              Type='string'  Value='[HOSTNAME]'           />
             <RegistryValue Name='path'                  Type='string'  Value='[PATH]'           />
-            <RegistryValue Name='login_text'            Type='string'  Value='[LOGIN_TEXT]'           />
-            <RegistryValue Name='otp_text'              Type='string'  Value='[OTP_TEXT]'           />
-            
-            <RegistryValue Name='v1_bitmap_path'        Type='string'  Value='[V1_BITMAP_PATH]' />
-            
-            <RegistryValue Name='two_step_hide_otp'     Type ='integer' Value='[TWO_STEP_HIDE_OTP]' />
-            <RegistryValue Name='two_step_send_password' Type='integer' Value='[TWO_STEP_SEND_PASSWORD]' />
-            <RegistryValue Name='two_step_send_empty_password' Type='integer' Value='[TWO_STEP_SEND_EMPTY_PASSWORD]' />
-            
-            <RegistryValue Name='ssl_ignore_unknown_ca' Type='integer' Value='[SSL_IGNORE_UNKNOWN_CA]' />
-            <RegistryValue Name='ssl_ignore_invalid_cn' Type='integer' Value='[SSL_IGNORE_INVALID_CN]' />
+			<RegistryValue Name='specialKey'            Type='string'  Value='[APIKEY]'          />
+ 		    <!--<RegistryValue Name='login_text'            Type='string'  Value='[LOGIN_TEXT]'           />-->
+            <!--<RegistryValue Name='otp_text'              Type='string'  Value='[OTP_TEXT]'           />-->
 
-            <RegistryValue Name='hide_fullname'       Type='integer' Value='[HIDE_FULLNAME]' />
-            <RegistryValue Name='hide_domainname'     Type='integer' Value='[HIDE_DOMAINNAME]' />
-            <RegistryValue Name='release_log'         Type='integer' Value='[RELEASE_LOG]' />
+            <!--<RegistryValue Name='v1_bitmap_path'        Type='string'  Value='[V1_BITMAP_PATH]' />-->
+            
+            <!--<RegistryValue Name='two_step_hide_otp'     Type ='integer' Value='[TWO_STEP_HIDE_OTP]' />-->
+            <!--<RegistryValue Name='two_step_send_password' Type='integer' Value='[TWO_STEP_SEND_PASSWORD]' />
+            <RegistryValue Name='two_step_send_empty_password' Type='integer' Value='[TWO_STEP_SEND_EMPTY_PASSWORD]' />-->
+
+			<RegistryValue Name='ssl_ignore_unknown_ca' Type='string' Value='[SSL_IGNORE_UNKNOWN_CA]' />
+			<RegistryValue Name='ssl_ignore_invalid_cn' Type='string' Value='[SSL_IGNORE_INVALID_CN]' />
+
+            <!--<RegistryValue Name='hide_fullname'       Type='integer' Value='[HIDE_FULLNAME]' />
+            <RegistryValue Name='hide_domainname'     Type='integer' Value='[HIDE_DOMAINNAME]' />-->
+            <RegistryValue Name='release_log'         Type='string' Value='[RELEASE_LOG]' />
             
             <!-- Disabled:
             <RegistryValue Name='timeout'               Type='integer' Value='[TIMEOUT]' />

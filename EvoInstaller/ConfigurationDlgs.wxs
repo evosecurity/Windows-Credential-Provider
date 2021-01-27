@@ -35,53 +35,40 @@
         <Control Id="HttpsLabel" Type="Text" X="45" Y="58" Width="220" Height="15" TabSkip="no" Text="https://" />
         <Control Id="HostnameEdit" Type="Edit" X="75" Y="55" Width="115" Height="18" Property="HOSTNAME" />
         <Control Id="PathEdit" Type="Edit" X="195" Y="55" Width="90" Height="18" Property="PATH" /> 
-        <Control Id="PathOptLabel" Type="Text" X="290" Y="58" Width="220" Height="15" TabSkip="no" Text="(optional)" />
-        <!--   
+        <!--<Control Id="PathOptLabel" Type="Text" X="290" Y="58" Width="220" Height="15" TabSkip="no" Text="(optional)" />-->
+
+		<Control Id="ApiKeyLabel" Type="Text" X="45" Y="80" Width="40" Height="15" TabSkip="no" Text="API Key:" />
+		<Control Id="ApiKey" Type="Edit" X="80" Y="80" Width="205" Height="18" Property="APIKEY"/>
+		  <!--   
         <Control Id="ServerUrlInfo" Type="PushButton" X="270" Y="64" Width="18" Height="18" FixedSize="yes" IconSize="16" Text="HelpIcon" Icon="yes">
           <Publish Event="SpawnDialog" Value="ServerUrlInfoDlg">1</Publish>
         </Control>
         -->
-        
-        <!-- Checkboxes -->
-        <Control Id="SSLIgnoreCACheckBox" Type="CheckBox" X="45" Y="80" Width="220" Height="17" Property="SSL_IGNORE_UNKNOWN_CA" CheckBoxValue="1" Text="Ignore Unknown CA Errors when using SSL." />
-        <Control Id="SSLIgnoreCNCheckBox" Type="CheckBox" X="45" Y="100" Width="220" Height="17" Property="SSL_IGNORE_INVALID_CN" CheckBoxValue="1" Text="Ignore Invalid Common Name Errors when using SSL." />
 
-        <Control Id="TwoStepHideOTP" Type="CheckBox" X="45" Y="120" Width="220" Height="17" Property="TWO_STEP_HIDE_OTP" CheckBoxValue="1" Text="Display OTP field in second step."/>
-        
-        <Control Id="TwoStepSendPassword" Type="CheckBox" X="60" Y="137" Width="220" Height="17" Property="TWO_STEP_SEND_PASSWORD" CheckBoxValue="1" Text="Send domain password to privacyIDEA." >
-          <Condition Action="disable">TWO_STEP_HIDE_OTP &lt;&gt; 1</Condition>
-          <Condition Action="enable">TWO_STEP_HIDE_OTP=1</Condition>
-          <Publish Property="TWO_STEP_SEND_EMPTY_PASSWORD" Value="{}" Order="1">TWO_STEP_SEND_PASSWORD</Publish>
-        </Control>
-        
-        <Control Id="TwoStepSendEmptyPassword" Type="CheckBox" X="60" Y="152" Width="220" Height="17" Property="TWO_STEP_SEND_EMPTY_PASSWORD" CheckBoxValue="1" Text="Send empty password to privacyIDEA." >
-          <Condition Action="disable">TWO_STEP_HIDE_OTP &lt;&gt; 1</Condition>
-          <Condition Action="enable">TWO_STEP_HIDE_OTP=1</Condition>
-          <Publish Property="TWO_STEP_SEND_PASSWORD" Value="{}" Order="1">TWO_STEP_SEND_EMPTY_PASSWORD</Publish>
-        </Control>
 
-        <Control Id="HideUserOrDomain" Type="Text" X="45" Y="175" Width="200" Height="15" Transparent="yes" NoPrefix="yes">
-          <Text>Hide when the desktop is locked:</Text>
-        </Control>
-        
-        <Control Id="HideFullName" Type="CheckBox" X="45" Y="187" Width="220" Height="17" Property="HIDE_FULLNAME" CheckBoxValue="1" Text="Hide the username and domain.">
-          <Publish Property="HIDE_DOMAINNAME" Value="{}" Order="1">HIDE_FULLNAME</Publish>
-        </Control>
+		<Control Id="SSLIgnoreCACheckBox" Type="CheckBox" X="45" Y="110" Width="220" Height="17" Property="SSL_IGNORE_UNKNOWN_CA" CheckBoxValue="1" Text="Ignore Unknown CA Errors when using SSL." />
+		<Control Id="SSLIgnoreCNCheckBox" Type="CheckBox" X="45" Y="130" Width="220" Height="17" Property="SSL_IGNORE_INVALID_CN" CheckBoxValue="1" Text="Ignore Invalid Common Name Errors when using SSL." />
+		<Control Id="ReleaseVersionLog" Type="CheckBox" X="45" Y="150" Width="220" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create Logfile in productive use." />
 
-        <Control Id="HideDomainName" Type="CheckBox" X="45" Y="202" Width="220" Height="17" Property="HIDE_DOMAINNAME" CheckBoxValue="1" Text="Hide only the domain.">
-          <Publish Property="HIDE_FULLNAME" Value="{}" Order="1">HIDE_DOMAINNAME</Publish>
-        </Control>
+		<!--<Control Id="TwoStepHideOTP" Type="CheckBox" X="45" Y="120" Width="220" Height="17" Property="TWO_STEP_HIDE_OTP" CheckBoxValue="1" Text="Display OTP field in second step."/>-->
         
-        <Control Id="ChangeSettingsLabel" Type="Text" X="45" Y="222" Width="220" Height="15" TabSkip="no" Text="{\Tahoma_Bold} These settings can be changed in the registry." />
+
+		<Control Id="ChangeSettingsLabel" Type="Text" X="45" Y="222" Width="220" Height="15" TabSkip="no" Text="{\Tahoma_Bold} These settings can be changed in the registry." />
         
         <!-- Bottom Controls -->
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
           <Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>
         </Control>
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
-          <Publish Event="NewDialog" Value="UserConfigurationDlg">HOSTNAME</Publish>
-          <Publish Event="SpawnDialog" Value="NoServerURLMessageDlg">HOSTNAME="hostname"</Publish>
-        </Control>
+          <!--<Publish Event="NewDialog" Value="UserConfigurationDlg">HOSTNAME</Publish>-->
+			<Publish Event="NewDialog" Value="VerifyReadyDlg">HOSTNAME</Publish>
+			<Publish Event="SpawnDialog" Value="NoServerURLMessageDlg">HOSTNAME="hostname"</Publish>
+
+			<!-- These were in the UserConfigurationDlg that was removed-->
+			<!-- Re-populate the configuration to the registry -->
+			<Publish Event="ReinstallMode" Value="m" Order="1">Installed</Publish>
+			<Publish Event="Reinstall" Value="MainInstall" Order="2">Installed</Publish>
+		</Control>
 
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
           <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
@@ -93,7 +80,7 @@
         </Control>
         <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
         <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes">
-          <Text>{\WixUI_Font_Title}Configuration 1/2</Text>
+          <Text>{\WixUI_Font_Title}Configuration</Text>
         </Control>
         <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
 
@@ -101,8 +88,8 @@
     </UI>
   </Fragment>
 
-  <Fragment>
-    <UI> <!-- PAGE 2-->
+	<Fragment>
+    <UI> 
       <Dialog Id="UserConfigurationDlg" Width="370" Height="270" Title="[ProductName] Setup" NoMinimize="yes">
 
         <Control Id="UserConfigurationInfo" Type="Text" X="45" Y="43" Width="300" Height="45" TabSkip="no" Text="!(loc.UserConfigurationInfo)" />
@@ -122,7 +109,7 @@
         <Control Id="OTPTextLabel" Type="Text" X="45" Y="152" Width="220" Height="15" TabSkip="no" Text="&amp;OTP Field Text: (optional)" />
         <Control Id="OTPTextEdit" Type="Edit" X="45" Y="164" Width="220" Height="18" Property="OTP_TEXT" Text="{64}" />
 
-        <Control Id="ReleaseVersionLog" Type="CheckBox" X="45" Y="185" Width="220" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create Logfile in productive use." />
+        <!--<Control Id="ReleaseVersionLog" Type="CheckBox" X="45" Y="185" Width="220" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create Logfile in productive use." />-->
         
         <!-- Bottom Controls -->
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">

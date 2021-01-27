@@ -32,11 +32,14 @@
   
   <?define BaseProductName = "Evo Secure Login" ?>
   <?define Manufacturer = "Evo Security" ?>
-  
-  <?define Publisher = "Evo Security" ?>
+  <?define ShortManufacturer = "EvoSecurity" ?>
+
+
+	<?define Publisher = "Evo Security" ?>
   <?define AppURLInfoAbout = "http://www.evosecurity.com" ?>
+  <?define ShortPublisher = "EvoSecurity" ?>
   
-  <?define ProductFolderName = "Evo Secure Login" ?>
+  <?define ProductFolderName = "EvoSecureLogin" ?>
   <?define SimpleProductName = "EvoLogin-CP" ?>
   
   <?if $(var.Platform) = x64 ?>
@@ -50,5 +53,5 @@
     <?define PlatformProgramFilesFolder = "ProgramFilesFolder" ?>
     <?define PlatformSystemFolder = "SystemFolder" ?>
   <?endif ?>
-  <?define FinalPath = "$(var.PlatformProgramFilesFolder)\$(var.Publisher)\$(var.ProductFolderName)\" ?>
+  <?define FinalPath = "$(var.PlatformProgramFilesFolder)\$(var.ShortPublisher)\$(var.ProductFolderName)\" ?>
 </Include>

@@ -57,7 +57,7 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, secure_string& user, s
     //std::string skey = "mvXcphkyhzAGYtFgtFtR5k7TVh9mk7PL";
     std:: string skey;
     ATL::CRegKey rkey;
-    if (S_OK == rkey.Open(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Evo Solution\\EvoLogin-CP\\", KEY_READ))
+    if (S_OK == rkey.Open(HKEY_LOCAL_MACHINE, L"SOFTWARE\\EvoSecurity\\EvoLogin-CP\\", KEY_READ))
     {
         WCHAR szBuf[MAX_PATH];
         ULONG ulRead = _countof(szBuf);
