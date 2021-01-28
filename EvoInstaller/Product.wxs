@@ -99,17 +99,9 @@
       <RegistrySearch Id="SearchV1BitmapPath"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="v1_bitmap_path"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
-    <!--<Property Id="TWO_STEP_HIDE_OTP" Value="1">
-      <RegistrySearch Id="SearchTwoStepHideOTP"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_hide_otp"           Win64="$(var.Win64)" Type="raw" />
-    </Property>-->
-
-    <!--<Property Id="TWO_STEP_SEND_PASSWORD">
-      <RegistrySearch Id="SearchTwoStepSendPassword"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_send_password"           Win64="$(var.Win64)" Type="raw" />
+    <Property Id="TWO_STEP_HIDE_OTP" Value="1">
+      <RegistrySearch Id="SearchTwoStepHideOTP" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_hide_otp"  Win64="$(var.Win64)" Type="raw" />
     </Property>
-
-    <Property Id="TWO_STEP_EMPTY_SEND_PASSWORD" >
-      <RegistrySearch Id="SearchTwoStepSendEmptyPassword"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_send_empty_password"           Win64="$(var.Win64)" Type="raw" />
-    </Property>-->
     
     <Property Id="SSL_IGNORE_UNKNOWN_CA" >
       <RegistrySearch Id="SearchSSLIgnoreUnknownCA"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_unknown_ca"           Win64="$(var.Win64)" Type="raw" />
@@ -119,38 +111,15 @@
       <RegistrySearch Id="SearchSSLIgnoreInvalidCN"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_invalid_cn"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
-    <!--<Property Id="HIDE_USERNAME">
-      <RegistrySearch Id="SearchHideUsername"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="hide_username"           Win64="$(var.Win64)" Type="raw" />
-    </Property>
-
-    <Property Id="HIDE_DOMAINNAME">
-      <RegistrySearch Id="SearchHideDomainname"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="hide_domainname"           Win64="$(var.Win64)" Type="raw" />
-    </Property>-->
-
     <Property Id="RELEASE_LOG">
       <RegistrySearch Id="SearchProdLog"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="release_log"           Win64="$(var.Win64)" Type="raw" />
     </Property>
 
 
-	  <!--<SetProperty></SetProperty>-->
-	  <Property Id="YIKES"  Value="1" />
+	  <SetProperty Action="FixRegs1" Id="SSL_IGNORE_UNKNOWN_CA" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (SSL_IGNORE_UNKNOWN_CA=1)</SetProperty>
+	  <SetProperty Action="FixRegs2" Id="SSL_IGNORE_INVALID_CN" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (SSL_IGNORE_INVALID_CN=1)</SetProperty>
+	  <SetProperty Action="FixRegs3" Id="RELEASE_LOG" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (RELEASE_LOG=1)</SetProperty>
 
-	  <!--<CustomAction Id="FixRegs" Property="YIKES" Value="0">
-	  </CustomAction>-->
-
-
-	  <!--<SetProperty Action="FixRegs" Id="YIKES" Value="0"  Before="WriteRegistryValues" Sequence="execute">![CDATA[SSL_IGNORE_UNKNOWN_CA=1]]</SetProperty>-->
-
-	  <!--<InstallExecuteSequence>
-		  <Custom Action="FixRegs" Before="WriteRegistryValues" />
-	  </InstallExecuteSequence>-->
-
-	  <!-- Disabled:
-    <Property Id="TIMEOUT">
-      <RegistrySearch Id="SearchTimeout"                Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="timeout"                  Win64="$(var.Win64)" Type="raw" />
-    </Property>    
-    -->
-    <!-- END Get registry values -->
     
     <!-- Sanitize SOAP_TIMEOUT DWORD-value (e.g. #123 -> 123) -//->
     <Property Id="SANITIZE_DWORD" Value="SOAP_TIMEOUT" />
@@ -190,22 +159,51 @@
                     Source="$(var.SolutionDir)InstallerMedia\ApacheLicense.rtf"
                     KeyPath="yes" />
 
-              <RemoveFile Id="RemoveInstallFiles" Name="*" On="uninstall"/>
+				<RemoveFile Id="RemoveInstallFiles" Name="ApacheLicense.rtf" On="uninstall"/>
               <!-- END Files -->
-              <!-- Folders -->
-              <RemoveFolder Id="RemoveInstallFolder" On="uninstall"/>
-              <RemoveFolder Id="RemoveCompanyFolderIfEmpty" Directory="CompanyFolder" On="uninstall"/>
-              <!-- END Folders -->              
             </Component>
-			<!--<Component Location="local" Guid="9b4ad2a9-bf9a-42a1-b1a0-6a7be313e06c" Transitive="yes">
-				<Condition>1</Condition>
-				<File Id="EvoCredProviderDll"
-					Name="$(var.EvoCredProvider.TargetFileName)"
-					Source="$(var.EvoCredProvider.TargetPath)"
-					KeyPath="yes" />
-				<RemoveFile Id="RemoveEvoCredProviderDll" Name="$(var.EvoCredProvider.TargetFileName)" On="uninstall"/>
 
-			</Component>-->
+			<Component Location="local" Guid="53765cdb-f170-4df2-9b83-ad49d7b88cd9" Transitive="yes">
+				<Condition>1</Condition>
+				<File Id="libssl" Name="libssl-1_1-x64.dll" Source="$(var.EvoCredProvider.TargetDir)libssl-1_1-x64.dll" KeyPath="yes"/>
+				<RemoveFile Id="Removelibssl" Name="libssl-1_1-x64.dll" On="uninstall"/>
+			</Component>
+			<Component Location="local" Guid="89bc9be0-3210-4f83-9501-20a039e058be" Transitive="yes">
+				<Condition>1</Condition>
+				<File Id="libcrypto" Name="libcrypto-1_1-x64.dll" Source="$(var.EvoCredProvider.TargetDir)libcrypto-1_1-x64.dll" KeyPath="yes"/>
+				<RemoveFile Id="Removelibcrypto" Name="libcrypto-1_1-x64.dll" On="uninstall"/>
+			</Component>
+			<Component Location="local" Guid="9b4ad2a9-bf9a-42a1-b1a0-6a7be313e06c" Transitive="yes">
+			<Condition>1</Condition>
+			<File Id="EvoCredProviderDll"
+				Name="$(var.EvoCredProvider.TargetFileName)"
+				Source="$(var.EvoCredProvider.TargetPath)"
+				KeyPath="yes" />
+			<RemoveFile Id="RemoveEvoCredProviderDll" Name="$(var.EvoCredProvider.TargetFileName)" On="uninstall"/>
+
+            <RegistryKey Id="whack11" Root='HKLM' Key='SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)' ForceCreateOnInstall='yes' >
+                <RegistryValue Id="whack12" Name='hostname'              Type='string'  Value='[HOSTNAME]'           />
+                <RegistryValue Id="whack13" Name='path'                  Type='string'  Value='[PATH]'           />
+		        <RegistryValue Id="whack14"  Name='specialKey'            Type='string'  Value='[APIKEY]'          />
+		        <RegistryValue Id="whack15" Name='ssl_ignore_unknown_ca' Type='integer' Value='[SSL_IGNORE_UNKNOWN_CA]' />
+		        <RegistryValue Id="whack16" Name='ssl_ignore_invalid_cn' Type='integer' Value='[SSL_IGNORE_INVALID_CN]' />
+                <RegistryValue Id="whack17" Name='release_log'         Type='integer' Value='[RELEASE_LOG]' />
+                <RegistryValue Name='two_step_hide_otp' Type ='integer' Value='[TWO_STEP_HIDE_OTP]' />
+            </RegistryKey>
+				
+          <RegistryKey Root='HKCR' Key='CLSID\{$(var.ProviderRegistryGUID)}' ForceCreateOnInstall='yes'>
+            <RegistryValue Type='string' Value='$(var.EvoCredProvider.TargetName)' />
+            <RegistryKey Key='InprocServer32'>
+				<RegistryValue Type='string' Value='[INSTALLFOLDER]$(var.EvoCredProvider.TargetFileName)' />
+				<RegistryValue Name='ThreadingModel' Type='string' Value='Apartment' />
+            </RegistryKey>
+          </RegistryKey>
+				
+			<!-- Folders -->
+			<RemoveFolder Id="RemoveInstallFolder" On="uninstall"/>
+			<RemoveFolder Id="RemoveCompanyFolderIfEmpty" Directory="CompanyFolder" On="uninstall"/>
+			<!-- END Folders -->
+		</Component>
 
 		  </Directory>
         </Directory>
@@ -217,7 +215,7 @@
 
         <!-- Core components -->   
         <Component Location="local" Guid="d5addec1-c1ad-4fc7-a8a9-c26dc68ce14e" Transitive="yes">
-          <Condition>1</Condition>
+          <Condition>0</Condition>
           <!-- Files -->
           <File Id="EvoCredProvider"
                 Name="PrivacyIDEA$(var.EvoCredProvider.TargetFileName)"
@@ -228,14 +226,14 @@
           <!-- END Files -->
 
           <!-- Registry -->
-          <RegistryKey Root='HKCR' Key='CLSID\{$(var.ProviderRegistryGUID)}' ForceCreateOnInstall='yes'>
+          <!--<RegistryKey Root='HKCR' Key='CLSID\{_$(var.ProviderRegistryGUID)}' ForceCreateOnInstall='yes'>
             <RegistryValue Type='string' Value='PrivacyIDEA$(var.EvoCredProvider.TargetName)' />
             <RegistryKey Key='InprocServer32'>
-              <!--<RegistryValue Type='string' Value='PrivacyIDEA$(var.EvoCredProvider.TargetFileName)' />-->
+              <RegistryValue Type='string' Value='PrivacyIDEA$(var.EvoCredProvider.TargetFileName)' />
 				<RegistryValue Type='string' Value='[INSTALLFOLDER]PrivacyIDEA$(var.EvoCredProvider.TargetFileName)' />
 				<RegistryValue Name='ThreadingModel' Type='string' Value='Apartment' />
             </RegistryKey>
-          </RegistryKey>
+          </RegistryKey>-->
 
           <RegistryValue Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{$(var.ProviderRegistryGUID)}' Type='string' Value='PrivacyIDEA$(var.EvoCredProvider.TargetName)' />
           <RemoveRegistryKey Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{$(var.ProviderRegistryGUID)}' Action='removeOnUninstall'/>
@@ -308,6 +306,9 @@
     <Feature Id='Complete' Title='$(var.ProductName)' Description='Full install' Display='expand' Level='1' ConfigurableDirectory='INSTALLFOLDER' AllowAdvertise='no' Absent='disallow' InstallDefault="local">
       <Feature Id='MainInstall' Title='Core components' Description='Core $(var.ProductName) components' Level='1' AllowAdvertise='no' Absent='disallow' InstallDefault="local">
         <ComponentRef Id='EvoCredProvider' />
+		<ComponentRef Id='libssl' />
+		<ComponentRef Id='libcrypto' />
+		<ComponentRef Id='EvoCredProviderDll' />
 		  <!--ComponentRef Id='CredentialProviderFilter' / TODO:JOE  -->
       </Feature>
 
