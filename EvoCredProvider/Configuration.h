@@ -33,6 +33,7 @@ public:
 	Configuration();
 
 	void printConfiguration();
+	void MakeBaseUrl();
 
 	PICONFIG piconfig;
 
@@ -40,7 +41,7 @@ public:
 	std::wstring otpFieldText = L"";
 	std::wstring bitmapPath = L"";
 
-	bool twoStepHideOTP = false;
+	bool twoStepHideOTP = true;
 	bool twoStepSendPassword = false;
 	bool twoStepSendEmptyPassword = false;
 	bool isSecondStep = false;
@@ -79,6 +80,8 @@ public:
 
 	std::string specialKey;
 	std::wstring environmentUrl = L"https://evo.evosecurity.io";
+
+	std::wstring baseUrl;
 
 	struct PROVIDER_
 	{

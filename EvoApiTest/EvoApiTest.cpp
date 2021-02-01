@@ -15,7 +15,7 @@ WCHAR wszDefaultEnvironmentUrl[] = L"https://evo.evosecurity.io";
 bool Authenticate( EvoAPI::AuthenticateResponse& response)
 {
     EvoAPI EvoApi{};
-    return EvoApi.Authenticate(L"evo.testing@evosecurity.com", L"Testing123!", wszDefaultEnvironmentUrl, response);
+    return EvoApi.Authenticate(L"evo.testing@evosecurity.com", L"Testing123!", response);
 }
 
 bool ValidateMFA(EvoAPI::ValidateMFAResponse& response)
@@ -25,7 +25,7 @@ bool ValidateMFA(EvoAPI::ValidateMFAResponse& response)
     wcin >> sAuthCode;
 
     EvoAPI EvoApi{};
-    return EvoApi.ValidateMFA(sAuthCode.c_str(), L"evo.testing@evosecurity.com", L"Testing123!", wszDefaultEnvironmentUrl, response);
+    return EvoApi.ValidateMFA(sAuthCode.c_str(), L"evo.testing@evosecurity.com", L"Testing123!", response);
 }
 
 bool CheckLogin(std::string request_id, EvoAPI::CheckLoginResponse& response)
@@ -54,7 +54,6 @@ std::string wstring_to_string(const std::wstring& ws)
 
 bool GetCredsFromPayload(EvoAPI::LoginResponse& response, secure_string& user, secure_string& pw)
 {
-    //std::string skey = "mvXcphkyhzAGYtFgtFtR5k7TVh9mk7PL";
     std:: string skey;
     ATL::CRegKey rkey;
     if (S_OK == rkey.Open(HKEY_LOCAL_MACHINE, L"SOFTWARE\\EvoSecurity\\EvoLogin-CP\\", KEY_READ))
@@ -73,8 +72,6 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, secure_string& user, s
 
         user = sData.substr(0, find);
         pw = sData.substr(find + 1);
-
-
 
         return true;
     }
@@ -111,11 +108,13 @@ int main()
         for (int i = 0; i < 10; ++i)
         {
             Sleep(1000);
-            cout << "Checking ...  ";
+            cout << "Checking ...  " << endl;
             if (LoginGood = CheckLogin(authenticateResponse.request_id, loginResponse))
             {
                 cout << "\nChecked ok" << endl;
                 break;
+            }
+            else {
             }
         }
 

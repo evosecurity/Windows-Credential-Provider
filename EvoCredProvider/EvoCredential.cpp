@@ -748,10 +748,10 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 		DebugPrint("Connect First step");
 
 		EvoAPI::AuthenticateResponse response;
-		EvoAPI evoApi;
-		if (evoApi.Authenticate(m_config->credential.username, m_config->credential.password, m_config->environmentUrl, response))
+		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
+		if (evoApi.Authenticate(m_config->credential.username, m_config->credential.password,  response))
 		{
-			_privacyIDEA.asyncEvoPoll(response.request_id, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
+			_privacyIDEA.asyncEvoPoll(response.request_id, m_config->baseUrl, m_config->environmentUrl, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
 		}
 
 	}
@@ -760,8 +760,8 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 		DebugPrint("Connect Second step");
 		
 		EvoAPI::ValidateMFAResponse response;
-		EvoAPI evoApi;
-		if (evoApi.ValidateMFA(m_config->credential.otp, m_config->credential.username, m_config->credential.password.c_str(), m_config->environmentUrl, response))
+		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
+		if (evoApi.ValidateMFA(m_config->credential.otp, m_config->credential.username, m_config->credential.password.c_str(), response))
 		{
 			SecureWString user, pw, domain;
 			if (GetCredsFromPayload(response, m_config, user, pw, domain))

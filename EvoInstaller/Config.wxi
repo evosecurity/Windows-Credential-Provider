@@ -27,8 +27,8 @@
   <!-- Getting version from CredentialProvider set in versioning\version.h -->
   <?define Version = "!(bind.fileVersion.EvoCredProvider)" ?>
 
-  <?define ProviderRegistryGUID = "a81f782d-cf30-439a-bad8-645d9862ea99" ?> <!-- changed -->
-  <?define ProviderFilterRegistryGUID = "a81f782e-cf30-439a-bad8-645d9862ea99" ?> <!-- temp filter -->
+  <?define ProviderRegistryGUID = "a81f782d-cf30-439a-bad8-645d9862ea99" ?>
+  <?define ProviderFilterRegistryGUID = "a81f782e-cf30-439a-bad8-645d9862ea99" ?>
   
   <?define BaseProductName = "Evo Secure Login" ?>
   <?define Manufacturer = "Evo Security" ?>

@@ -6,7 +6,8 @@ class EvoAPI
 {
     using EvoString = std::wstring;
 public:
-    EvoAPI(LPCWSTR pwzBaseUrl = nullptr); // if nullptr uses default 
+    EvoAPI(LPCWSTR pwzBaseUrl = nullptr, LPCWSTR pwzEnvironmentUrl = nullptr); // if nullptr uses default
+    EvoAPI(EvoString baseUrl, EvoString environmentUrl);
 
     enum ErrorType { NONE, SETUP_ERROR, SERVER_UNAVAILABLE };
 
@@ -23,6 +24,7 @@ public:
     };
 
     static std::wstring DefaultBaseUrl;
+    static std::wstring DefaultEnvironmentUrl;
 
     Response Connect(EvoString endpoint, const std::string& data, LPCWSTR pwzMethod = L"POST");
 
@@ -59,8 +61,8 @@ public:
     {
     };
 
-    bool Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, const std::wstring& wsEnvironmentUrl, AuthenticateResponse& authResponse );
-    bool ValidateMFA(const std::wstring& wsMFACode, const std::wstring&  wsUser, const std::wstring& wsPassword, const std::wstring& wsEnvironmentUrl, ValidateMFAResponse& validateResponse);
+    bool Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, AuthenticateResponse& authResponse );
+    bool ValidateMFA(const std::wstring& wsMFACode, const std::wstring&  wsUser, const std::wstring& wsPassword, ValidateMFAResponse& validateResponse);
     bool CheckLoginRequest(LPCSTR pszCode, CheckLoginResponse& clResponse);
 
 
@@ -68,6 +70,7 @@ public:
 
 protected:
     EvoString m_strBaseUrl;
+    EvoString m_strEnvironmentUrl;
 
     EvoAPI::ErrorType m_dwLastError = EvoAPI::ErrorType::NONE;
     int m_nCustomPort = 0;

@@ -24,6 +24,7 @@
 #include "RegistryReader.h"
 #include "EvoConsts.h"
 #include "EvoSolution.h"
+#include <atlstr.h>
 
 using namespace std;
 using namespace ATL;
@@ -85,7 +86,10 @@ Configuration::Configuration()
 	rkey.Get(L"hide_fullname", hideFullName);
 	rkey.Get(L"hide_otp_sleep_s", hide_otp_sleep_s);
 
-	rkey.Get(L"two_step_hide_otp", twoStepHideOTP);
+
+	// this value is initialized now to true, and not read from registry
+	//rkey.Get(L"two_step_hide_otp", twoStepHideOTP);
+	
 	rkey.Get(L"two_step_send_empty_password", twoStepSendEmptyPassword);
 	rkey.Get(L"two_step_send_password", twoStepSendPassword);
 
@@ -128,6 +132,8 @@ Configuration::Configuration()
 
 	rkey.Get(L"specialKey", specialKey);
 
+	MakeBaseUrl();
+
 	// Realm Mapping
 	rkey.Get(L"default_realm", piconfig.defaultRealm);
 	if (rkey) rkey.Close();
@@ -165,6 +171,14 @@ Configuration::Configuration()
 	winVerMinor = info.dwMinorVersion;
 	winBuildNr = info.dwBuildNumber;
 }
+
+void Configuration::MakeBaseUrl()
+{
+	wstring sHostName = CString(piconfig.hostname.c_str()).Trim(L'/');
+	wstring sPath = CString(piconfig.path.c_str()).Trim(L'/');
+	baseUrl = L"https://" + sHostName + L"/" + sPath + L"/";
+}
+
 
 // for printing
 inline wstring b2ws(bool b) {

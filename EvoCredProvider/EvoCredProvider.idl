@@ -12,7 +12,7 @@ import "CredentialProvider.idl";
 	uuid(a8d9a214-5fdd-48f5-ae11-30b1b7bdf8bd),
 	version(1.0),
 ]
-library TestCredProviderLib
+library EvoCredProviderLib
 {
 	importlib("stdole2.tlb");
 	[

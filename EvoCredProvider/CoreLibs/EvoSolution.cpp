@@ -43,14 +43,14 @@ bool EvoSolution::stopPoll()
 	return true;
 }
 
-void EvoSolution::asyncEvoPoll(std::string transaction_id, std::function<void(bool)> callback)
+void EvoSolution::asyncEvoPoll(std::string transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback)
 {
 	_runPoll.store(true);
-	std::thread t(&EvoSolution::pollEvoThread, this, transaction_id, callback);
+	std::thread t(&EvoSolution::pollEvoThread, this, transaction_id, baseUrl, environmentUrl, callback);
 	t.detach();
 }
 
-void EvoSolution::pollEvoThread(const std::string& transaction_id, std::function<void(bool)> callback)
+void EvoSolution::pollEvoThread(const std::string& transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback)
 {
 	DebugPrint("Starting pollEvoThread()");
 
@@ -60,7 +60,7 @@ void EvoSolution::pollEvoThread(const std::string& transaction_id, std::function
 	EvoAPI::CheckLoginResponse response;
 	while (_runPoll.load())
 	{
-		EvoAPI evoApi;
+		EvoAPI evoApi(baseUrl, environmentUrl);
 
 		if (evoApi.CheckLoginRequest(transaction_id.c_str(), response))
 		{

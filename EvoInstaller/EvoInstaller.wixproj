@@ -52,6 +52,14 @@
     <EmbeddedResource Include="ConfigurationDlgsLocales.wxl" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EvoCredFilter\EvoCredFilter.vcxproj">
+      <Name>EvoCredFilter</Name>
+      <Project>{96409061-5561-4af8-829b-2262ec029aeb}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
     <ProjectReference Include="..\EvoCredProvider\EvoCredProvider.vcxproj">
       <Name>EvoCredProvider</Name>
       <Project>{6a19c1dd-7fec-4707-a564-4d9258c46949}</Project>

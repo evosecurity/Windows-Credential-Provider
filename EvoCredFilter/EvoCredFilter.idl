@@ -1,0 +1,27 @@
+// EvoCredFilter.idl : IDL source for EvoCredFilter
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (EvoCredFilter.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "CredentialProvider.idl";
+
+[
+	uuid(010c13d3-a357-4db9-b3d4-6e83b87c31f8),
+	version(1.0),
+]
+library EvoCredFilterLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(a81f782e-cf30-439a-bad8-645d9862ea99)
+	]
+	coclass CredentialFilter
+	{
+		[default] interface ICredentialProviderFilter;
+	};
+};
+
+import "shobjidl.idl";

@@ -1,19 +1,19 @@
 HKCR
 {
-	TestCredProvider.Provider.1 = s 'Provider class'
+	EvoCredProvider.Provider.1 = s 'EvoCredProvider class'
 	{
 		CLSID = s '{a81f782d-cf30-439a-bad8-645d9862ea99}'
 	}
-	TestCredProvider.Provider = s 'Provider class'
+	EvoCredProvider.Provider = s 'EvoCredProvider class'
 	{		
-		CurVer = s 'TestCredProvider.Provider.1'
+		CurVer = s 'EvoCredProvider.Provider.1'
 	}
 	NoRemove CLSID
 	{
-		ForceRemove {a81f782d-cf30-439a-bad8-645d9862ea99} = s 'Provider class'
+		ForceRemove {a81f782d-cf30-439a-bad8-645d9862ea99} = s 'EvoCredProvider class'
 		{
-			ProgID = s 'TestCredProvider.Provider.1'
-			VersionIndependentProgID = s 'TestCredProvider.Provider'
+			ProgID = s 'EvoCredProvider.Provider.1'
+			VersionIndependentProgID = s 'EvoCredProvider.Provider'
 			InprocServer32 = s '%MODULE%'
 			{
 				val ThreadingModel = s 'Apartment'

@@ -73,11 +73,17 @@ nlohmann::json tryParse(const std::string& in)
 
 
 std::wstring EvoAPI::DefaultBaseUrl = L"https://api.evosecurity.com/api/v1/desktop/";
+std::wstring EvoAPI::DefaultEnvironmentUrl = L"https://evo.evosecurity.io";
 
-EvoAPI::EvoAPI(LPCWSTR pwzBaseUrl)
-    : m_strBaseUrl(pwzBaseUrl != nullptr ? pwzBaseUrl : DefaultBaseUrl.c_str())
+EvoAPI::EvoAPI(LPCWSTR pwzBaseUrl, LPCWSTR pwzEnvironmentUrl)
+    : m_strBaseUrl(pwzBaseUrl != nullptr && *pwzBaseUrl != 0 ? pwzBaseUrl : DefaultBaseUrl.c_str())
+    , m_strEnvironmentUrl(pwzEnvironmentUrl != nullptr && *pwzEnvironmentUrl != 0 ? pwzEnvironmentUrl : DefaultEnvironmentUrl.c_str())
 {
+}
 
+EvoAPI::EvoAPI(EvoString baseUrl, EvoString environmentUrl)
+    : EvoAPI(baseUrl.c_str(), environmentUrl.c_str()) // delegated constructor
+{
 }
 
 void EvoAPI::DebugPrint(LPCSTR)
@@ -283,10 +289,10 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
     return evoApiResponse;
 }
 
-bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, const std::wstring& wsEnvironmentUrl, AuthenticateResponse& response)
+bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, AuthenticateResponse& response)
 {
     char szBuf[2024];
-    wsprintfA(szBuf, "{\"user\":\"%S\",\"password\":\"%S\",\"environment_url\":\"%S\"}", wsUser.c_str(), wsPassword.c_str(), wsEnvironmentUrl.c_str());
+    wsprintfA(szBuf, "{\"user\":\"%S\",\"password\":\"%S\",\"environment_url\":\"%S\"}", wsUser.c_str(), wsPassword.c_str(), m_strEnvironmentUrl.c_str());
 
     auto evoApiResponse = Connect(L"authenticate", szBuf);
     if (evoApiResponse.dwStatus != HTTP_STATUS_OK)
@@ -302,11 +308,11 @@ bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPa
     return true;
 }
 
-bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUser, const std::wstring& wsPassword, const std::wstring& wsEnvironmentUrl, ValidateMFAResponse& response)
+bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUser, const std::wstring& wsPassword, ValidateMFAResponse& response)
 {
     char szBuf[2024];
     wsprintfA(szBuf, "{ \"mfa_code\" : \"%S\", \"environment_url\" : \"%S\", \"user\" : \"%S\", \"password\" : \"%S\"}",
-        wsMFACode.c_str(), wsEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str());
+        wsMFACode.c_str(), m_strEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str());
 
     auto evoApiResponse = Connect(L"validate_mfa", szBuf);
 
