@@ -120,7 +120,7 @@ public:
 		// these items are from EVO passing back 
 		SecureWString validatedUsername;
 		SecureWString validatedPassword;
-		SecureWString validatedDomain;
+		std::wstring validatedDomain;
 
 	} credential;
 };

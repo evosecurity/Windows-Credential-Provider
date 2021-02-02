@@ -7,6 +7,7 @@
 #include <winhttp.h>
 #include <atlutil.h>
 #include <iostream>
+#include <codecvt>
 #include "../EvoCredProvider/CoreLibs_/nlohmann/json.hpp"
 using namespace std;
 
@@ -308,6 +309,14 @@ bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPa
     return true;
 }
 
+static std::wstring s2ws(std::string s)
+{
+    using convert_typeX = std::codecvt_utf8<wchar_t>;
+    std::wstring_convert<convert_typeX, wchar_t> converterX;
+
+    return converterX.from_bytes(s);
+}
+
 bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUser, const std::wstring& wsPassword, ValidateMFAResponse& response)
 {
     char szBuf[2024];
@@ -330,6 +339,7 @@ bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUs
     response.salt = j["salt"];
     response.offlineCode = j["offline_code"];
     response.cipher = j["cipher"];
+    response.domain = s2ws(j["domain"]);
 
     return response.success;
 }
@@ -355,6 +365,7 @@ bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
     response.salt = j["salt"];
     response.offlineCode = j["offline_code"];
     response.cipher = j["cipher"];
+    response.domain = s2ws(j["domain"]);
 
     return true;
 }

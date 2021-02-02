@@ -44,6 +44,7 @@ public:
         ResponseString iv;
         int iters = 0;
         ResponseString cipher;
+        std::wstring domain;
         void Clear()
         {
             data = salt = iv = cipher = "";

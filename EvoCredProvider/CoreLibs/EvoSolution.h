@@ -54,6 +54,7 @@ public:
 		std::string data, iv, salt;
 		int iters = 0;
 		int offlineCode = 0;
+		std::wstring domain;
 	} m_PollResults;
 
 };

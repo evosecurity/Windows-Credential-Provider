@@ -609,7 +609,7 @@ HRESULT CEvoCredential::ConnectOrig(IQueryContinueWithStatus* pqcws)
 }
 
 bool GetCredsFromPayload(std::string data, std::string salt, std::string iv, std::shared_ptr<Configuration> config,
-	SecureWString& user, SecureWString& pw, SecureWString& domain)
+	SecureWString& user, SecureWString& pw)
 {
 	try
 	{
@@ -625,20 +625,8 @@ bool GetCredsFromPayload(std::string data, std::string salt, std::string iv, std
 		if (find == wData.npos)
 			return false;
 
-		SecureWString userAndDomain = wData.substr(0, find);
+		user = wData.substr(0, find);
 		pw = wData.substr(find + 1);
-
-		find = userAndDomain.find('\\');
-		if (find != userAndDomain.npos)
-		{
-			domain = userAndDomain.substr(0, find);
-			user = userAndDomain.substr(find + 1);
-		}
-		else
-		{
-			user = userAndDomain;
-			domain = L"";
-		}
 
 		return true;
 	}
@@ -649,48 +637,9 @@ bool GetCredsFromPayload(std::string data, std::string salt, std::string iv, std
 	return false;
 }
 
-bool GetCredsFromPayload(EvoAPI::LoginResponse& response, std::shared_ptr<Configuration> config, SecureWString& user, SecureWString& pw, SecureWString& domain)
+bool GetCredsFromPayload(EvoAPI::LoginResponse& response, std::shared_ptr<Configuration> config, SecureWString& user, SecureWString& pw)
 {
-#if 0
-	try
-	{
-		DebugPrint("Special key: " + config->specialKey);
-		secure_string sData = RubyDecode(response.data, response.salt, response.iv, config->specialKey);
-		if (sData.length() == 0)
-			return false;
-
-		///  TODO: need to create secure versions of these ???
-		SecureWString wData = EvoSolution::s2ws(sData.c_str()).c_str();
-
-		size_t find = wData.find(',');
-		if (find == wData.npos)
-			return false;
-
-		SecureWString userAndDomain = wData.substr(0, find);
-		pw = wData.substr(find + 1);
-
-		find = userAndDomain.find('\\');
-		if (find != userAndDomain.npos)
-		{
-			domain = userAndDomain.substr(0, find);
-			user = userAndDomain.substr(find + 1);
-		}
-		else
-		{
-			user = userAndDomain;
-			domain = L"";
-		}
-
-		return true;
-	}
-	catch (...)
-	{
-
-	}
-	return false;
-#endif
-
-	return GetCredsFromPayload(response.data, response.salt, response.iv, config, user, pw, domain);
+	return GetCredsFromPayload(response.data, response.salt, response.iv, config, user, pw);
 }
 
 
@@ -715,11 +664,11 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 		DebugPrint("Bypassing privacyIDEA...");
 		m_config->bypassPrivacyIDEA = false;
 
-		SecureWString user, pw, domain;
+		SecureWString user, pw;
 		if (GetCredsFromPayload(_privacyIDEA.m_PollResults.data, _privacyIDEA.m_PollResults.salt, _privacyIDEA.m_PollResults.iv, m_config,
-			user, pw, domain))
+			user, pw))
 		{
-			m_config->credential.validatedDomain = domain;
+			m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
 			m_config->credential.validatedPassword = pw;
 			m_config->credential.validatedUsername = user;
 
@@ -734,8 +683,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 			s += wstring(pw.c_str());
 			DebugPrint(s);
 
-			s = L"Payload domain: ";
-			s += wstring(domain.c_str());
+			s = L"Payload domain: " + m_config->credential.validatedDomain;
 			DebugPrint(s);
 #endif
 		}
@@ -763,14 +711,14 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
 		if (evoApi.ValidateMFA(m_config->credential.otp, m_config->credential.username, m_config->credential.password.c_str(), response))
 		{
-			SecureWString user, pw, domain;
-			if (GetCredsFromPayload(response, m_config, user, pw, domain))
+			SecureWString user, pw;
+			if (GetCredsFromPayload(response, m_config, user, pw))
 			{
 				ReleaseDebugPrint(L"Got creds from payload");
 
 				m_config->credential.validatedUsername = user;
 				m_config->credential.validatedPassword = pw;
-				m_config->credential.validatedDomain = domain;
+				m_config->credential.validatedDomain = response.domain;
 
 				_piStatus = EVOSOL_AUTH_SUCCESS;
 
@@ -784,7 +732,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 				DebugPrint(s);
 
 				s = L"Payload domain: ";
-				s += wstring(domain.c_str());
+				s += wstring(response.domain.c_str());
 				DebugPrint(s);
 #endif
 			}
@@ -801,6 +749,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	DebugPrint("END Connect");
 	return S_OK;
 }
+
 void CEvoCredential::PushAuthenticationCallbackOrig(bool success)
 {
 	DebugPrint(__FUNCTION__);

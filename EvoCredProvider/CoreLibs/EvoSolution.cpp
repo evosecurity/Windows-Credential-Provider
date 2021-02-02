@@ -80,6 +80,7 @@ void EvoSolution::pollEvoThread(const std::string& transaction_id, std::wstring 
 			m_PollResults.iv = response.iv;
 			m_PollResults.salt = response.salt;
 			m_PollResults.offlineCode = response.offlineCode;
+			m_PollResults.domain = response.domain;
 			callback(response.success);
 		}
 		catch (...)

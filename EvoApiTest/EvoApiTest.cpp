@@ -64,6 +64,10 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, secure_string& user, s
 
         skey = wstring_to_string(szBuf);
     }
+    if (skey.empty())
+    {
+        cout << "specialKey not in registry" << endl;
+    }
     try
     {
         secure_string sData = RubyDecode(response.data, response.salt, response.iv, skey);
@@ -92,6 +96,10 @@ int main()
         if (GetCredsFromPayload(validateMfaResponse, user, pw))
         {
             cout << "user: " << user << endl << "pw:   " << pw << endl;
+        }
+        else
+        {
+            cout << "failed getting payload creds" << endl;
         }
     }
     else {
@@ -124,6 +132,10 @@ int main()
             if (GetCredsFromPayload(validateMfaResponse, user, pw))
             {
                 cout << "user: " << user << endl << "pw:   " << pw << endl;
+            }
+            else
+            {
+                cout << "Failed to get creds" << endl;
             }
         }
     }
