@@ -151,6 +151,7 @@ HRESULT CEvoCredential::SetSelected(BOOL* pbAutoLogon)
 	{
 		// We cant handle a password change while the maschine is locked, so we guide the user to sign out and in again like windows does
 		DebugPrint("Password must change in CPUS_UNLOCK_WORKSTATION");
+		ReleaseDebugPrint("Password must change in CPUS_UNLOCK_WORKSTATION");
 		m_pCredProvCredentialEvents->SetFieldString(this, FID_LARGE_TEXT, L"Go back until you are asked to sign in.");
 		m_pCredProvCredentialEvents->SetFieldString(this, FID_SMALL_TEXT, L"To change your password sign out and in again.");
 		m_pCredProvCredentialEvents->SetFieldState(this, FID_LDAP_PASS, CPFS_HIDDEN);

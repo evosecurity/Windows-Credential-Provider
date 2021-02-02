@@ -146,15 +146,6 @@
 				<Directory Id="CompanyFolder" Name="$(var.ShortPublisher)">
 					<Directory Id="INSTALLFOLDER" Name="$(var.ProductFolderName)">
 
-						<Component Id="LicenseFiles" Location="local" Guid="9d02dffe-1766-420c-97b5-755979b68205">
-							<File Id="LicenseFile"
-								  Name="ApacheLicense.rtf"
-								  Source="$(var.SolutionDir)InstallerMedia\ApacheLicense.rtf"
-								  KeyPath="yes" />
-
-							<RemoveFile Id="RemoveInstallFiles" Name="ApacheLicense.rtf" On="uninstall"/>
-						</Component>
-
 						<Component Location="local" Guid="53765cdb-f170-4df2-9b83-ad49d7b88cd9" Transitive="yes">
 							<Condition>1</Condition>
 							<File Id="libssl" Name="libssl-1_1-x64.dll" Source="$(var.EvoCredProvider.TargetDir)libssl-1_1-x64.dll" KeyPath="yes"/>
@@ -243,7 +234,6 @@
 				<MergeRef Id='VCRedist'/>
 			</Feature>
 
-			<ComponentRef Id='LicenseFiles' />
 		</Feature>
 
 		<!-- WiX Configuration -->

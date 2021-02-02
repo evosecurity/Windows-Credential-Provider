@@ -77,6 +77,7 @@ STDMETHODIMP CProvider::SetUsageScenario(_CREDENTIAL_PROVIDER_USAGE_SCENARIO cpu
 {
 	m_cpus = cpus;
 	m_dwCpusFlags = dwFlags;
+	DebugPrint(string(__FUNCTION__) + ": " + Shared::CPUStoString(cpus));
 #ifdef _DEBUG
 	DebugPrint(string(__FUNCTION__) + ": " + Shared::CPUStoString(cpus));
 	m_config->printConfiguration();
