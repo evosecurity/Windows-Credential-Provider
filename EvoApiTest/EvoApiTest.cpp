@@ -5,17 +5,24 @@
 #include <EvoApi.h>
 #include <decrypt.h>
 #include <atlbase.h>
+#include <Lmwksta.h>
+#include <StrSafe.h>
+#include <LMAPIbuf.h>
 
 #pragma warning(disable : 4996)
+#pragma comment(lib, "netapi32.lib")
 
 using namespace std;
 
 WCHAR wszDefaultEnvironmentUrl[] = L"https://evo.evosecurity.io";
 
+wstring GlobalUserName;
+secure_wstring GlobalPassword;
+
 bool Authenticate( EvoAPI::AuthenticateResponse& response)
 {
     EvoAPI EvoApi{};
-    return EvoApi.Authenticate(L"evo.testing@evosecurity.com", L"Testing123!", response);
+    return EvoApi.Authenticate(GlobalUserName, GlobalPassword, response);
 }
 
 bool ValidateMFA(EvoAPI::ValidateMFAResponse& response)
@@ -25,7 +32,7 @@ bool ValidateMFA(EvoAPI::ValidateMFAResponse& response)
     wcin >> sAuthCode;
 
     EvoAPI EvoApi{};
-    return EvoApi.ValidateMFA(sAuthCode.c_str(), L"evo.testing@evosecurity.com", L"Testing123!", response);
+    return EvoApi.ValidateMFA(sAuthCode.c_str(), GlobalUserName, GlobalPassword.c_str(), response);
 }
 
 bool CheckLogin(std::string request_id, EvoAPI::CheckLoginResponse& response)
@@ -86,10 +93,52 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, secure_string& user, s
     return false;
 }
 
-int main()
+void WriteBasicResponse(const EvoAPI::BasicResponse& resp)
 {
+    cout << "Http code: " << resp.httpStatus << ", raw_response: " << resp.raw_response << endl;
+}
+
+int _tmain(int argc, wchar_t* argv[])
+{
+    DWORD bufSize = MAX_PATH;
+    TCHAR domainNameBuf[MAX_PATH];
+    GetComputerNameEx(ComputerNameDnsDomain, domainNameBuf, &bufSize);
+    wcout << "Domain name: " << domainNameBuf << endl;
+
+    WCHAR domain_name[256];
+    WKSTA_INFO_100* info = NULL;
+    if (ERROR_SUCCESS == NetWkstaGetInfo(NULL, 100, (LPBYTE*) &info) &&
+        SUCCEEDED(StringCchCopy(domain_name, ARRAYSIZE(domain_name), info->wki100_langroup))) {
+        wcout << "Other domain name: " << domain_name << endl;
+    }
+    if (info != NULL)
+        NetApiBufferFree(info);
+
+
+    if (argc <2 ) {
+        cout << "Enter username: ";
+        wcin >> GlobalUserName;
+    }
+    else {
+        GlobalUserName = argv[1];
+        wcout << L"User name: " << GlobalUserName << endl;
+    }
+
+
+    if (argc < 3) {
+        cout << "Enter password: ";
+        wcin >> GlobalPassword;
+    }
+    else {
+        GlobalPassword = argv[2];
+        wcout << L"Password: " << GlobalPassword << endl;
+    }
+
+
     EvoAPI::ValidateMFAResponse validateMfaResponse;
-    if (ValidateMFA(validateMfaResponse)) {
+    bool bValidateMFA = ValidateMFA(validateMfaResponse);
+    WriteBasicResponse(validateMfaResponse);
+    if (bValidateMFA) {
         cout << "validate_mfa succeeded" << endl;
 
         secure_string user, pw;
@@ -107,7 +156,9 @@ int main()
     }
 
     EvoAPI::AuthenticateResponse authenticateResponse;
-    if (Authenticate(authenticateResponse) && !authenticateResponse.request_id.empty())
+    bool bAuth = Authenticate(authenticateResponse);
+    WriteBasicResponse(authenticateResponse);
+    if ( bAuth && !authenticateResponse.request_id.empty())
     {
         cout << "Authenticating: " << authenticateResponse.request_id << endl;
 
@@ -117,7 +168,9 @@ int main()
         {
             Sleep(1000);
             cout << "Checking ...  " << endl;
-            if (LoginGood = CheckLogin(authenticateResponse.request_id, loginResponse))
+            LoginGood = CheckLogin(authenticateResponse.request_id, loginResponse);
+            WriteBasicResponse(loginResponse);
+            if (LoginGood)
             {
                 cout << "\nChecked ok" << endl;
                 break;
@@ -138,5 +191,9 @@ int main()
                 cout << "Failed to get creds" << endl;
             }
         }
+    }
+    else {
+        cout << "Authenticate failed ..." << endl;
+        cout << "Http response: " << authenticateResponse.httpStatus << ", message: " << authenticateResponse.raw_response <<  endl;
     }
 }

@@ -212,6 +212,11 @@
 							<RemoveRegistryKey Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Provider Filters\{$(var.ProviderFilterRegistryGUID)}' Action='removeOnUninstall'/>
 						</Component>
 
+						<Component Location='local' Guid='922385D2-6165-4677-B5AA-30A20F797780'>
+							<File Id='EvoApiTest' Name='EvoApiTest.exe' Source='$(var.EvoCredProvider.TargetDir)EvoApiTest.exe' KeyPath='yes'/>
+							<RemoveFile Id='RemoveEvoApiTest' Name="EvoApiTest.exe" On="uninstall" />
+						</Component>
+
 						</Directory>
 				</Directory>
 			</Directory>
@@ -228,6 +233,10 @@
 
 			<Feature Id='InstallAsDefault' Title='Default provider' Description='Install $(var.ProductName) as default provider. No other provider will be allowed to be used for logon.' Level='1000' AllowAdvertise='no' InstallDefault="local">
 				<ComponentRef Id='ActivateCredentialProviderFilter' />
+			</Feature>
+
+			<Feature Id='ApiTest' Title='Evo API Test' Description='Command line utility to test connection' Level='1000' AllowAdvertise='no' InstallDefault="local">
+				<ComponentRef Id='EvoApiTest' />
 			</Feature>
 
 			<Feature Id="VCRedist" Title="Visual C++ Runtime" AllowAdvertise="no" Display="hidden" Level="1">

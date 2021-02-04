@@ -296,6 +296,7 @@ bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPa
     wsprintfA(szBuf, "{\"user\":\"%S\",\"password\":\"%S\",\"environment_url\":\"%S\"}", wsUser.c_str(), wsPassword.c_str(), m_strEnvironmentUrl.c_str());
 
     auto evoApiResponse = Connect(L"authenticate", szBuf);
+    response.assign(evoApiResponse);
     if (evoApiResponse.dwStatus != HTTP_STATUS_OK)
         return false;
 
@@ -324,6 +325,7 @@ bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUs
         wsMFACode.c_str(), m_strEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str());
 
     auto evoApiResponse = Connect(L"validate_mfa", szBuf);
+    response.assign(evoApiResponse);
 
     if (evoApiResponse.dwStatus != HTTP_STATUS_OK)
         return false;
@@ -332,16 +334,22 @@ bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUs
     if (j == nullptr)
         return false;
 
-    response.success = j["success"];
-    response.iters = j["iter"];
-    response.data = j["data"];
-    response.iv = j["iv"];
-    response.salt = j["salt"];
-    response.offlineCode = j["offline_code"];
-    response.cipher = j["cipher"];
-    response.domain = s2ws(j["domain"]);
+    try
+    {
+        response.success =  j["success"];
+        response.offlineCode = j["offline_code"];
+        response.iters = j["iter"];
+        response.data = j["data"];
+        response.iv = j["iv"];
+        response.salt = j["salt"];
+        response.cipher = j["cipher"];
+        response.domain = s2ws(j["domain"]);
+    }
+    catch (...)
+    {
 
-    return response.success;
+    }
+    return true;
 }
 
 bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
@@ -351,6 +359,7 @@ bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
     wsprintf(szBuf, _T("check_login_request?request_id=%S"), pwzCode);
 
     auto connectResponse = Connect(szBuf, "", L"GET");
+    response.assign(connectResponse);
     if (connectResponse.dwStatus != HTTP_STATUS_OK)
         return false;
 
@@ -358,15 +367,21 @@ bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
     if (j == nullptr)
         return false;
 
-    response.success = j["success"];
-    response.iters = j["iter"];
-    response.data = j["data"];
-    response.iv = j["iv"];
-    response.salt = j["salt"];
-    response.offlineCode = j["offline_code"];
-    response.cipher = j["cipher"];
-    response.domain = s2ws(j["domain"]);
+    try
+    {
+        response.success =  j["success"];
+        response.offlineCode = j["offline_code"];
+        response.iters = j["iter"];
+        response.data = j["data"];
+        response.iv = j["iv"];
+        response.salt = j["salt"];
+        response.cipher = j["cipher"];
+        response.domain = s2ws(j["domain"]);
+    }
+    catch (...)
+    {
 
+    }
     return true;
 }
 

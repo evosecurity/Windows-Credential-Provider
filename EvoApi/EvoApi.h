@@ -29,13 +29,26 @@ public:
     Response Connect(EvoString endpoint, const std::string& data, LPCWSTR pwzMethod = L"POST");
 
     using ResponseString = std::string; // chance to replace with secure_string later ...
-    struct AuthenticateResponse
+
+    // maybe convoluted? maybe extra layer not needed and just use Response?
+    struct BasicResponse
+    {
+        DWORD httpStatus = 0;
+        std::string raw_response;
+        void assign(const Response& rhs)
+        {
+            httpStatus = rhs.dwStatus;
+            raw_response = rhs.sResponse;
+        }
+    };
+
+    struct AuthenticateResponse : public BasicResponse
     {
         bool bMFAEnabled;
         ResponseString request_id;
     };
 
-    struct LoginResponse
+    struct LoginResponse : public BasicResponse
     {
         bool success = false;
         int offlineCode = 0;
