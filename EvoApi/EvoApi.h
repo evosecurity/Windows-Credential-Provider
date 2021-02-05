@@ -95,3 +95,5 @@ protected:
     int m_nSendTimeOut = 30;
     int m_nReceiveTimeOut = 30;
 };
+
+std::wstring GetDomainOrMachine();

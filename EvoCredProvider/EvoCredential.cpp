@@ -698,9 +698,17 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 
 		EvoAPI::AuthenticateResponse response;
 		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
-		if (evoApi.Authenticate(m_config->credential.username, m_config->credential.password,  response))
+		bool bSuccess = evoApi.Authenticate(m_config->credential.username, m_config->credential.password, response);
+		if (bSuccess)
 		{
+			DebugPrint(L"Starting to poll");
 			_privacyIDEA.asyncEvoPoll(response.request_id, m_config->baseUrl, m_config->environmentUrl, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
+		}
+		else
+		{
+			DebugPrint(L"Not going to poll. Failed initial Authenticate.");
+			_piStatus = EVOSOL_AUTH_FAILURE;
+			return S_OK;
 		}
 
 	}
@@ -1015,13 +1023,26 @@ HRESULT CEvoCredential::GetSerialization(
 
 			if (m_config->isSecondStep == false && m_config->twoStepHideOTP)
 			{
-				// Prepare for the second step (input only OTP)
-				m_config->isSecondStep = true;
-				m_config->clearFields = false;
-				_util.SetScenario(m_config->provider.pCredProvCredential,
-					m_config->provider.pCredProvCredentialEvents,
-					SCENARIO::SECOND_STEP);
-				*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+				if (_piStatus != EVOSOL_AUTH_FAILURE)
+				{
+					// Prepare for the second step (input only OTP)
+					m_config->isSecondStep = true;
+					m_config->clearFields = false;
+					_util.SetScenario(m_config->provider.pCredProvCredential,
+						m_config->provider.pCredProvCredentialEvents,
+						SCENARIO::SECOND_STEP);
+					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+				}
+				else
+				{
+					// ok, failed on the original connect ... need to return ...
+					m_config->clearFields = true;
+					ShowErrorMessage(L"Failure to authenticate.", 0);
+					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_util.ResetScenario(this, m_pCredProvCredentialEvents);
+					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_piStatus = EVOSOL_STATUS_NOT_SET;
+				}
 			}
 			else
 			{

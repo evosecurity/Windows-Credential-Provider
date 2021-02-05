@@ -228,16 +228,16 @@
 				<ComponentRef Id='libssl' />
 				<ComponentRef Id='libcrypto' />
 				<ComponentRef Id='EvoCredProvider' />
-				<ComponentRef Id='CredentialProviderFilter' />
+				<ComponentRef Id='EvoApiTest' />
 			</Feature>
 
 			<Feature Id='InstallAsDefault' Title='Default provider' Description='Install $(var.ProductName) as default provider. No other provider will be allowed to be used for logon.' Level='1000' AllowAdvertise='no' InstallDefault="local">
+				<ComponentRef Id='CredentialProviderFilter' />
 				<ComponentRef Id='ActivateCredentialProviderFilter' />
 			</Feature>
 
-			<Feature Id='ApiTest' Title='Evo API Test' Description='Command line utility to test connection' Level='1000' AllowAdvertise='no' InstallDefault="local">
-				<ComponentRef Id='EvoApiTest' />
-			</Feature>
+			<!--<Feature Id='ApiTest' Title='Evo API Test' Description='Command line utility to test connection' Level='1000' AllowAdvertise='no' InstallDefault="local">
+			</Feature>-->
 
 			<Feature Id="VCRedist" Title="Visual C++ Runtime" AllowAdvertise="no" Display="hidden" Level="1">
 				<MergeRef Id='VCRedist'/>

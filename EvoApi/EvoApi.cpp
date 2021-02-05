@@ -293,7 +293,8 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, AuthenticateResponse& response)
 {
     char szBuf[2024];
-    wsprintfA(szBuf, "{\"user\":\"%S\",\"password\":\"%S\",\"environment_url\":\"%S\"}", wsUser.c_str(), wsPassword.c_str(), m_strEnvironmentUrl.c_str());
+    wsprintfA(szBuf, "{\"user\":\"%S\",\"password\":\"%S\",\"environment_url\":\"%S\",\"domain\":\"%S\"}", 
+        wsUser.c_str(), wsPassword.c_str(), m_strEnvironmentUrl.c_str(), GetDomainOrMachine().c_str());
 
     auto evoApiResponse = Connect(L"authenticate", szBuf);
     response.assign(evoApiResponse);
@@ -321,8 +322,8 @@ static std::wstring s2ws(std::string s)
 bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUser, const std::wstring& wsPassword, ValidateMFAResponse& response)
 {
     char szBuf[2024];
-    wsprintfA(szBuf, "{ \"mfa_code\" : \"%S\", \"environment_url\" : \"%S\", \"user\" : \"%S\", \"password\" : \"%S\"}",
-        wsMFACode.c_str(), m_strEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str());
+    wsprintfA(szBuf, "{ \"mfa_code\" : \"%S\", \"environment_url\" : \"%S\", \"user\" : \"%S\", \"password\" : \"%S\", \"domain\" : \"%S\"}",
+        wsMFACode.c_str(), m_strEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str(), GetDomainOrMachine().c_str());
 
     auto evoApiResponse = Connect(L"validate_mfa", szBuf);
     response.assign(evoApiResponse);
@@ -388,6 +389,24 @@ bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
 void EvoAPI::SetCustomPort(int port)
 {
     m_nCustomPort = port;
+}
+
+
+std::wstring GetDomainOrMachine()
+{
+    DWORD bufSize = MAX_PATH;
+    TCHAR domainNameBuf[MAX_PATH];
+    GetComputerNameEx(ComputerNameDnsDomain, domainNameBuf, &bufSize);
+    if (bufSize != 0)
+        return domainNameBuf;
+
+    bufSize = MAX_PATH;
+    GetComputerName(domainNameBuf, &bufSize);
+    if (bufSize != 0)
+        return domainNameBuf;
+
+
+    return L"";
 }
 
 

@@ -100,10 +100,8 @@ void WriteBasicResponse(const EvoAPI::BasicResponse& resp)
 
 int _tmain(int argc, wchar_t* argv[])
 {
-    DWORD bufSize = MAX_PATH;
-    TCHAR domainNameBuf[MAX_PATH];
-    GetComputerNameEx(ComputerNameDnsDomain, domainNameBuf, &bufSize);
-    wcout << "Domain name: " << domainNameBuf << endl;
+    std::wstring domainNameBuf = GetDomainOrMachine();
+    wcout << "Domain name (or Computer name): " << domainNameBuf << endl;
 
     WCHAR domain_name[256];
     WKSTA_INFO_100* info = NULL;
