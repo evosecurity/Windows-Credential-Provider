@@ -83,12 +83,16 @@
 			<RegistrySearch Id="SearchPath" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="path" Win64="$(var.Win64)" Type="raw"/>
 		</Property>
 
-		<Property Id="ENVIRONMENTURL" Value="https://evo.evosecurity.io">
+		<Property Id="ENVIRONMENTURL" >
 			<RegistrySearch Id="SearchEnvironmentUrl" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="environmentUrl" Win64="$(var.Win64)" Type="raw" />
 		</Property>
 
-		<Property Id="APIKEY" Value="mvXcphkyhzAGYtFgtFtR5k7TVh9mk7PL">
+		<Property Id="APIKEY" >
 			<RegistrySearch Id="SearchSpecialKey" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="specialKey" Win64="$(var.Win64)" Type="raw"/>
+		</Property>
+
+		<Property Id="DOMAIN">
+			<RegistrySearch Id="SearchDOMAIN" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="domain" Win64="$(var.Win64)" Type="raw"/>
 		</Property>
 
 		<Property Id="LOGIN_TEXT">
@@ -103,14 +107,6 @@
 			<RegistrySearch Id="SearchV1BitmapPath"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="v1_bitmap_path"           Win64="$(var.Win64)" Type="raw" />
 		</Property>
 
-		<Property Id="SSL_IGNORE_UNKNOWN_CA" >
-			<RegistrySearch Id="SearchSSLIgnoreUnknownCA"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_unknown_ca"           Win64="$(var.Win64)" Type="raw" />
-		</Property>
-
-		<Property Id="SSL_IGNORE_INVALID_CN" >
-			<RegistrySearch Id="SearchSSLIgnoreInvalidCN"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="ssl_ignore_invalid_cn"           Win64="$(var.Win64)" Type="raw" />
-		</Property>
-
 		<Property Id="RELEASE_LOG">
 			<RegistrySearch Id="SearchProdLog"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="release_log"           Win64="$(var.Win64)" Type="raw" />
 		</Property>
@@ -119,8 +115,6 @@
 	  <RegistrySearch Id="SearchTwoStepHideOTP" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_hide_otp"  Win64="$(var.Win64)" Type="raw" />
 	</Property>-->
 
-		<SetProperty Action="FixRegs1" Id="SSL_IGNORE_UNKNOWN_CA" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (SSL_IGNORE_UNKNOWN_CA=1)</SetProperty>
-		<SetProperty Action="FixRegs2" Id="SSL_IGNORE_INVALID_CN" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (SSL_IGNORE_INVALID_CN=1)</SetProperty>
 		<SetProperty Action="FixRegs3" Id="RELEASE_LOG" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (RELEASE_LOG=1)</SetProperty>
 
 
@@ -169,11 +163,9 @@
 								<RegistryValue Name='hostname'              Type='string'  Value='[HOSTNAME]'           />
 								<RegistryValue Name='path'                  Type='string'  Value='[PATH]'           />
 								<RegistryValue Name='specialKey'            Type='string'  Value='[APIKEY]'          />
-								<RegistryValue Name='ssl_ignore_unknown_ca' Type='integer' Value='[SSL_IGNORE_UNKNOWN_CA]' />
-								<RegistryValue Name='ssl_ignore_invalid_cn' Type='integer' Value='[SSL_IGNORE_INVALID_CN]' />
 								<RegistryValue Name='release_log'         Type='integer' Value='[RELEASE_LOG]' />
 								<RegistryValue Name='environmentUrl' Type='string' Value='[ENVIRONMENTURL]' />
-								<!--<RegistryValue Name='two_step_hide_otp' Type ='integer' Value='[TWO_STEP_HIDE_OTP]' />-->
+								<RegistryValue Name='domain' Type='string' Value='[DOMAIN]' />
 							</RegistryKey>
 
 							<RegistryKey Root='HKCR' Key='CLSID\{$(var.ProviderRegistryGUID)}' ForceCreateOnInstall='yes'>
@@ -212,10 +204,10 @@
 							<RemoveRegistryKey Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Provider Filters\{$(var.ProviderFilterRegistryGUID)}' Action='removeOnUninstall'/>
 						</Component>
 
-						<Component Location='local' Guid='922385D2-6165-4677-B5AA-30A20F797780'>
+						<!--<Component Location='local' Guid='922385D2-6165-4677-B5AA-30A20F797780'>
 							<File Id='EvoApiTest' Name='EvoApiTest.exe' Source='$(var.EvoCredProvider.TargetDir)EvoApiTest.exe' KeyPath='yes'/>
 							<RemoveFile Id='RemoveEvoApiTest' Name="EvoApiTest.exe" On="uninstall" />
-						</Component>
+						</Component>-->
 
 						</Directory>
 				</Directory>
@@ -228,7 +220,6 @@
 				<ComponentRef Id='libssl' />
 				<ComponentRef Id='libcrypto' />
 				<ComponentRef Id='EvoCredProvider' />
-				<ComponentRef Id='EvoApiTest' />
 			</Feature>
 
 			<Feature Id='InstallAsDefault' Title='Default provider' Description='Install $(var.ProductName) as default provider. No other provider will be allowed to be used for logon.' Level='1000' AllowAdvertise='no' InstallDefault="local">
@@ -237,6 +228,7 @@
 			</Feature>
 
 			<!--<Feature Id='ApiTest' Title='Evo API Test' Description='Command line utility to test connection' Level='1000' AllowAdvertise='no' InstallDefault="local">
+				<ComponentRef Id='EvoApiTest' />
 			</Feature>-->
 
 			<Feature Id="VCRedist" Title="Visual C++ Runtime" AllowAdvertise="no" Display="hidden" Level="1">
@@ -246,7 +238,7 @@
 		</Feature>
 
 		<!-- WiX Configuration -->
-		<WixVariable Id="WixUILicenseRtf" Value="$(var.SolutionDir)InstallerMedia\ApacheLicense.rtf" />
+		<WixVariable Id="WixUILicenseRtf" Value="$(var.SolutionDir)InstallerMedia\EvoLicense.rtf" />
 		<WixVariable Id="WixUIBannerBmp" Value="$(var.SolutionDir)InstallerMedia\header.bmp" />
 		<WixVariable Id="WixUIDialogBmp" Value="$(var.SolutionDir)InstallerMedia\setup-screen.bmp" />
 		<!-- END WiX Configuration -->

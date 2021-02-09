@@ -28,30 +28,25 @@
     <UI> <!-- PAGE 1-->
       <TextStyle Id="Tahoma_Bold" FaceName="Tahoma" Size="8" Bold="yes"/>
       <Dialog Id="ServerConfigurationDlg" Width="370" Height="270" Title="[ProductName] Setup" NoMinimize="yes">
-        <!-- Text inputs (hostname, path, opt texts)
-        
-        <Control Id="ServerUrlLabel" Type="Text" X="45" Y="53" Width="220" Height="15" TabSkip="no" Text="hostname=privacyidea.example.com   path=/path/to/pi" />-->
        
         <Control Id="HttpsLabel" Type="Text" X="45" Y="58" Width="220" Height="15" TabSkip="no" Text="https://" />
         <Control Id="HostnameEdit" Type="Edit" X="75" Y="55" Width="115" Height="18" Property="HOSTNAME" />
         <Control Id="PathEdit" Type="Edit" X="195" Y="55" Width="90" Height="18" Property="PATH" /> 
-        <!--<Control Id="PathOptLabel" Type="Text" X="290" Y="58" Width="220" Height="15" TabSkip="no" Text="(optional)" />-->
 
 		<Control Id="EnvironmentUrlLabel" Type="Text" X="45" Y="80" Width="65" Height="15" TabSkip="no" Text="Environment URL:" />
 		<Control Id="EnvironmentUrl" Type="Edit" X="115" Y="80" Width="170" Height="18" Property="ENVIRONMENTURL"/>
 
-		<Control Id="ApiKeyLabel" Type="Text" X="45" Y="100" Width="40" Height="15" TabSkip="no" Text="API Key:" />
-		<Control Id="ApiKey" Type="Edit" X="80" Y="100" Width="205" Height="18" Property="APIKEY"/>
+		<Control Id="ApiKeyLabel" Type="Text" X="45" Y="100" Width="50" Height="15" TabSkip="no" Text="Shared Key:" />
+		<Control Id="ApiKey" Type="Edit" X="90" Y="100" Width="195" Height="18" Property="APIKEY"/>
+		  <Control Id="DomainLabel" Type="Text" X="45" Y="120" Width="40" Height="15" TabSkip="no" Text="Domain:" />
+		  <Control Id="Domain" Type="Edit" X="80" Y="120" Width="205" Height="18" Property="DOMAIN"/>
 		  <!--   
         <Control Id="ServerUrlInfo" Type="PushButton" X="270" Y="64" Width="18" Height="18" FixedSize="yes" IconSize="16" Text="HelpIcon" Icon="yes">
           <Publish Event="SpawnDialog" Value="ServerUrlInfoDlg">1</Publish>
         </Control>
         -->
 
-
-		<Control Id="SSLIgnoreCACheckBox" Type="CheckBox" X="45" Y="130" Width="220" Height="17" Property="SSL_IGNORE_UNKNOWN_CA" CheckBoxValue="1" Text="Ignore Unknown CA Errors when using SSL." />
-		<Control Id="SSLIgnoreCNCheckBox" Type="CheckBox" X="45" Y="150" Width="220" Height="17" Property="SSL_IGNORE_INVALID_CN" CheckBoxValue="1" Text="Ignore Invalid Common Name Errors when using SSL." />
-		<Control Id="ReleaseVersionLog" Type="CheckBox" X="45" Y="170" Width="220" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create Logfile in production use." />
+		<Control Id="ReleaseVersionLog" Type="CheckBox" X="45" Y="190" Width="220" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create Logfile in production use." />
 
 		<!--<Control Id="TwoStepHideOTP" Type="CheckBox" X="45" Y="120" Width="220" Height="17" Property="TWO_STEP_HIDE_OTP" CheckBoxValue="1" Text="Display OTP field in second step."/>-->
         

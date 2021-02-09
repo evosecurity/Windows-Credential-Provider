@@ -44,3 +44,6 @@
 // Use only those for now, since there is no need for the code to differentiate the error further
 // The "real" cause is logged right after the error occurs in the endpoint
 #define EVOSOL_ENDPOINT_SERVER_UNAVAILABLE				((HRESULT)0x88809041)
+
+
+#define EVOSOL_SERVER_PREPOLL_FAILED                    ((HRESULT)0x88809051)

@@ -707,7 +707,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 		else
 		{
 			DebugPrint(L"Not going to poll. Failed initial Authenticate.");
-			_piStatus = EVOSOL_AUTH_FAILURE;
+			_piStatus = EVOSOL_SERVER_PREPOLL_FAILED;
 			return S_OK;
 		}
 
@@ -1023,7 +1023,28 @@ HRESULT CEvoCredential::GetSerialization(
 
 			if (m_config->isSecondStep == false && m_config->twoStepHideOTP)
 			{
-				if (_piStatus != EVOSOL_AUTH_FAILURE)
+				if (_piStatus == EVOSOL_SERVER_PREPOLL_FAILED)
+				{
+					// ok, failed on the original connect ... need to return ...
+					m_config->clearFields = true;
+					ShowErrorMessage(L"Failure to PrePoll.", 0);
+					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_util.ResetScenario(this, m_pCredProvCredentialEvents);
+					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_piStatus = EVOSOL_STATUS_NOT_SET;
+				}
+				else if (_piStatus == EVOSOL_AUTH_FAILURE)
+				{
+					// ok, failed somewhere ... need to return ...
+					m_config->clearFields = true;
+					ShowErrorMessage(L"Failure to authenticate.", 0);
+					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_util.ResetScenario(this, m_pCredProvCredentialEvents);
+					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_piStatus = EVOSOL_STATUS_NOT_SET;
+
+				}
+				else
 				{
 					// Prepare for the second step (input only OTP)
 					m_config->isSecondStep = true;
@@ -1032,16 +1053,6 @@ HRESULT CEvoCredential::GetSerialization(
 						m_config->provider.pCredProvCredentialEvents,
 						SCENARIO::SECOND_STEP);
 					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
-				}
-				else
-				{
-					// ok, failed on the original connect ... need to return ...
-					m_config->clearFields = true;
-					ShowErrorMessage(L"Failure to authenticate.", 0);
-					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
-					_util.ResetScenario(this, m_pCredProvCredentialEvents);
-					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
-					_piStatus = EVOSOL_STATUS_NOT_SET;
 				}
 			}
 			else
