@@ -100,7 +100,7 @@ void WriteBasicResponse(const EvoAPI::BasicResponse& resp)
 
 int _tmain(int argc, wchar_t* argv[])
 {
-    std::wstring domainNameBuf = GetDomainOrMachine();
+    std::wstring domainNameBuf = GetDomainOrMachineIncludingRegistry();
     wcout << "Domain name (or Computer name): " << domainNameBuf << endl;
 
     WCHAR domain_name[256];

@@ -9,6 +9,8 @@
 #include <iostream>
 #include <codecvt>
 #include "../EvoCredProvider/CoreLibs_/nlohmann/json.hpp"
+#include "../EvoCommon/EvoConsts.h"
+
 using namespace std;
 
 class CWinHttpHandle
@@ -294,7 +296,7 @@ bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPa
 {
     char szBuf[2024];
     wsprintfA(szBuf, "{\"user\":\"%S\",\"password\":\"%S\",\"environment_url\":\"%S\",\"domain\":\"%S\"}", 
-        wsUser.c_str(), wsPassword.c_str(), m_strEnvironmentUrl.c_str(), GetDomainOrMachine().c_str());
+        wsUser.c_str(), wsPassword.c_str(), m_strEnvironmentUrl.c_str(), GetDomainOrMachineIncludingRegistry().c_str());
 
     auto evoApiResponse = Connect(L"authenticate", szBuf);
     response.assign(evoApiResponse);
@@ -323,7 +325,7 @@ bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUs
 {
     char szBuf[2024];
     wsprintfA(szBuf, "{ \"mfa_code\" : \"%S\", \"environment_url\" : \"%S\", \"user\" : \"%S\", \"password\" : \"%S\", \"domain\" : \"%S\"}",
-        wsMFACode.c_str(), m_strEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str(), GetDomainOrMachine().c_str());
+        wsMFACode.c_str(), m_strEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str(), GetDomainOrMachineIncludingRegistry().c_str());
 
     auto evoApiResponse = Connect(L"validate_mfa", szBuf);
     response.assign(evoApiResponse);
@@ -392,10 +394,39 @@ void EvoAPI::SetCustomPort(int port)
 }
 
 
-std::wstring GetDomainOrMachine()
+std::wstring GetDomainOrMachineIncludingRegistry()
 {
     DWORD bufSize = MAX_PATH;
-    TCHAR domainNameBuf[MAX_PATH];
+    WCHAR domainNameBuf[MAX_PATH];
+
+    static std::wstring wsRegisty = []()
+    {
+        WCHAR lambdaBuf[MAX_PATH] = L"";
+        ULONG nBufSize = MAX_PATH;
+
+        CRegKey regKey;
+        if (ERROR_SUCCESS == regKey.Open(HKEY_LOCAL_MACHINE, REG_STRING_EVOBASE, KEY_READ))
+        {
+            regKey.QueryStringValue(L"Domain", lambdaBuf, &nBufSize);
+            if (nBufSize > 1)
+            {
+                CString s{ lambdaBuf };
+                lambdaBuf[0] = 0;
+
+                s.Trim();
+                if (!s.IsEmpty())
+                {
+                    wcscpy_s(lambdaBuf, s);
+                    return wstring(lambdaBuf);
+                }
+            }
+        }
+        return wstring();
+    } ();
+
+    if (!wsRegisty.empty())
+        return wsRegisty;
+
     GetComputerNameEx(ComputerNameDnsDomain, domainNameBuf, &bufSize);
     if (bufSize != 0)
         return domainNameBuf;

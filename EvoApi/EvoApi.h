@@ -96,4 +96,4 @@ protected:
     int m_nReceiveTimeOut = 30;
 };
 
-std::wstring GetDomainOrMachine();
+std::wstring GetDomainOrMachineIncludingRegistry();
