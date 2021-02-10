@@ -53,7 +53,8 @@ HRESULT CEvoCredential::Initialize(__in const CREDENTIAL_PROVIDER_FIELD_DESCRIPT
 
 	if (NOT_EMPTY(user_name))
 	{
-		wstrUsername = wstring(user_name);
+		if (!m_config->m_bTenPercent)
+			wstrUsername = wstring(user_name);
 	}
 	if (NOT_EMPTY(domain_name))
 	{

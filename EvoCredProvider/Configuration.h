@@ -82,6 +82,7 @@ public:
 	std::wstring environmentUrl = L"https://evo.evosecurity.io";
 
 	std::wstring baseUrl;
+	bool m_bTenPercent = true;
 
 	struct PROVIDER_
 	{
