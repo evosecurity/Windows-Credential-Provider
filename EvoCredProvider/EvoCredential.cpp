@@ -241,8 +241,6 @@ HRESULT CEvoCredential::GetStringValue(DWORD dwFieldID, PWSTR* ppwsz)
 	return hr;
 }
 
-HBITMAP LoadPNG(HINSTANCE hInstance, UINT id); // extern, in LoadPNG.cpp
-
 HRESULT CEvoCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
 {
 	DebugPrint(__FUNCTION__);
@@ -280,12 +278,8 @@ HRESULT CEvoCredential::GetBitmapValue(DWORD dwFieldID, HBITMAP* phbmp)
 
 		if (hbmp == nullptr)
 		{
-			hbmp = LoadPNG(_AtlBaseModule.GetModuleInstance(), IDB_TILE_PNG);
-			if (hbmp == nullptr)
-			{
-				DebugPrint("Loading alternate bitmap");
-				hbmp = LoadBitmap(_AtlBaseModule.GetModuleInstance(), MAKEINTRESOURCE(IDB_TILE_IMAGE));
-			}
+			DebugPrint("Loading alternate bitmap");
+			hbmp = LoadBitmap(_AtlBaseModule.GetModuleInstance(), MAKEINTRESOURCE(IDB_NEW_TILE));
 		}
 
 		if (hbmp != nullptr)
@@ -702,12 +696,14 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 		bool bSuccess = evoApi.Authenticate(m_config->credential.username, m_config->credential.password, response);
 		if (bSuccess)
 		{
-			DebugPrint(L"Starting to poll");
+			DebugPrint(L"Start poll");
 			_privacyIDEA.asyncEvoPoll(response.request_id, m_config->baseUrl, m_config->environmentUrl, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
 		}
 		else
 		{
-			DebugPrint(L"Not going to poll. Failed initial Authenticate.");
+			ReleaseDebugPrint(L"No poll. Failed Authenticate. Http: " + std::to_wstring(response.httpStatus));
+			ReleaseDebugPrint(L"Tried with username: " + m_config->credential.username);
+			if (!response.raw_response.empty()) ReleaseDebugPrint("Authenticate response:" + response.raw_response);
 			_piStatus = EVOSOL_SERVER_PREPOLL_FAILED;
 			return S_OK;
 		}

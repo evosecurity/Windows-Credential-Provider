@@ -7,6 +7,7 @@
 #include <Shlwapi.h>
 using namespace std;
 
+#define LoggerPrint DebugPrint
 
 Utilities::Utilities(std::shared_ptr<Configuration> c) noexcept
 {
@@ -45,7 +46,7 @@ HRESULT Utilities::KerberosLogon(
 	__in SecureWString password,
 	__in std::wstring domain)
 {
-	DebugPrint(__FUNCTION__);
+	LoggerPrint(__FUNCTION__);
 
 	HRESULT hr;
 
@@ -63,11 +64,11 @@ HRESULT Utilities::KerberosLogon(
 	}
 
 #ifdef _DEBUG
-	DebugPrint("Packing Credential:");
-	DebugPrint(username);
-	DebugPrint(password.empty() ? L"empty password" :
+	LoggerPrint("Packing Credential:");
+	LoggerPrint(username);
+	LoggerPrint(password.empty() ? L"empty password" :
 		(_config->piconfig.logPasswords ? password : L"hidden but has value"));
-	DebugPrint(domain);
+	LoggerPrint(domain);
 #endif
 
 	if (!domain.empty() || bGetCompName)
@@ -136,7 +137,7 @@ HRESULT Utilities::KerberosChangePassword(
 	__in SecureWString password_new,
 	__in std::wstring domain)
 {
-	DebugPrint(__FUNCTION__);
+	LoggerPrint(__FUNCTION__);
 	KERB_CHANGEPASSWORD_REQUEST kcpr;
 	ZeroMemory(&kcpr, sizeof(kcpr));
 
@@ -155,11 +156,11 @@ HRESULT Utilities::KerberosChangePassword(
 		bGetCompName = GetComputerNameW(wsz, &cch);
 	}
 
-	DebugPrint(L"User: " + username);
-	DebugPrint(L"Domain: " + wstring(wsz));
-	DebugPrint(L"Pw old: " + _config->piconfig.logPasswords ? password_old :
+	LoggerPrint(L"User: " + username);
+	LoggerPrint(L"Domain: " + wstring(wsz));
+	LoggerPrint(L"Pw old: " + _config->piconfig.logPasswords ? password_old :
 		(password_old.empty() ? L"no value" : L"hidden but has value"));
-	DebugPrint(L"Pw new: " + _config->piconfig.logPasswords ? password_new :
+	LoggerPrint(L"Pw new: " + _config->piconfig.logPasswords ? password_new :
 		(password_new.empty() ? L"no value" : L"hidden but has value"));
 
 	if (!domain.empty() || bGetCompName)
@@ -222,13 +223,13 @@ HRESULT Utilities::CredPackAuthentication(
 {
 
 #ifdef _DEBUG
-	DebugPrint(__FUNCTION__);
-	DebugPrint(username);
+	LoggerPrint(__FUNCTION__);
+	LoggerPrint(username);
 	if (_config->piconfig.logPasswords) 
 	{
-		DebugPrint(password.c_str());
+		LoggerPrint(password.c_str());
 	}
-	DebugPrint(domain);
+	LoggerPrint(domain);
 #endif
 
 	const DWORD credPackFlags = _config->provider.credPackFlags;
@@ -252,7 +253,7 @@ HRESULT Utilities::CredPackAuthentication(
 	{
 		PWSTR domainUsername = NULL;
 		hr = DomainUsernameStringAlloc(domain.c_str(), username.c_str(), &domainUsername);
-		DebugPrint(domainUsername);
+		LoggerPrint(domainUsername);
 		if (SUCCEEDED(hr))
 		{
 			DWORD size = 0;
@@ -322,43 +323,43 @@ HRESULT Utilities::SetScenario(
 	__in ICredentialProviderCredentialEvents* pCPCE,
 	__in SCENARIO scenario)
 {
-	//DebugPrint(__FUNCTION__);
+	LoggerPrint(__FUNCTION__);
 	HRESULT hr = S_OK;
 
 	switch (scenario)
 	{
 	case SCENARIO::LOGON_BASE:
-		DebugPrint("SetScenario: LOGON_BASE");
+		LoggerPrint("SetScenario: LOGON_BASE");
 		hr = SetFieldStatePairBatch(pCredential, pCPCE, s_rgScenarioDisplayAllFields);
 		break;
 	case SCENARIO::UNLOCK_BASE:
-		DebugPrint("SetScenario: UNLOCK_BASE");
+		LoggerPrint("SetScenario: UNLOCK_BASE");
 		hr = SetFieldStatePairBatch(pCredential, pCPCE, s_rgScenarioUnlockPasswordOTP);
 		break;
 	case SCENARIO::SECOND_STEP:
-		DebugPrint("SetScenario: SECOND_STEP");
+		LoggerPrint("SetScenario: SECOND_STEP");
 		// Set the submit button next to the OTP field for the second step
 		_config->provider.pCredProvCredentialEvents->SetFieldSubmitButton(_config->provider.pCredProvCredential,
 			FID_SUBMIT_BUTTON, FID_OTP);
 		hr = SetFieldStatePairBatch(pCredential, pCPCE, s_rgScenarioSecondStepOTP);
 		break;
 	case SCENARIO::CHANGE_PASSWORD:
-		DebugPrint("SetScenario: CHANGE_PASSWORD");
+		LoggerPrint("SetScenario: CHANGE_PASSWORD");
 		// Set the submit button next to the repeat pw field
 		_config->provider.pCredProvCredentialEvents->SetFieldSubmitButton(_config->provider.pCredProvCredential,
 			FID_SUBMIT_BUTTON, FID_NEW_PASS_2);
 		hr = SetFieldStatePairBatch(pCredential, pCPCE, s_rgScenarioPasswordChange);
 		break;
 	case SCENARIO::UNLOCK_TWO_STEP:
-		DebugPrint("SetScenario: UNLOCK_TWO_STEP");
-		hr = SetFieldStatePairBatch(pCredential, pCPCE, s_rgScenarioUnlockFirstStepPassword);
+		LoggerPrint("SetScenario: UNLOCK_TWO_STEP");
+		hr = SetFieldStatePairBatch(pCredential, pCPCE, (!_config->m_bTenPercent) ?  s_rgScenarioUnlockFirstStepPassword : s_rgScenarioUnlockFirstStepPasswordTenPercent);
 		break;
 	case SCENARIO::LOGON_TWO_STEP:
-		DebugPrint("SetScenario: LOGON_TWO_STEP");
+		LoggerPrint("SetScenario: LOGON_TWO_STEP");
 		hr = SetFieldStatePairBatch(pCredential, pCPCE, s_rgScenarioLogonFirstStepUserLDAP);
 		break;
 	case SCENARIO::NO_CHANGE:
-		DebugPrint("SetScenario: NO_CHANGE");
+		LoggerPrint("SetScenario: NO_CHANGE");
 	default:
 		break;
 	}
@@ -389,17 +390,17 @@ HRESULT Utilities::SetScenario(
 		{
 			text = L"";
 		}
-		//DebugPrint(L"Setting large text: " + text);
+		//LoggerPrint(L"Setting large text: " + text);
 		if (text.empty() || _config->credential.username.empty())
 		{
 			//pCPCE->SetFieldState(pCredential, FID_LARGE_TEXT, CPFS_HIDDEN);
 			pCPCE->SetFieldString(pCredential, FID_LARGE_TEXT, _config->loginText.c_str());
-			DebugPrint(L"Setting large text: " + _config->loginText);
+			LoggerPrint(L"Setting large text: " + _config->loginText);
 		}
 		else
 		{
 			pCPCE->SetFieldString(pCredential, FID_LARGE_TEXT, text.c_str());
-			DebugPrint(L"Setting large text: " + text);
+			LoggerPrint(L"Setting large text: " + text);
 		}
 
 		// Small text, use if 1step or in 2nd step of 2step
@@ -407,7 +408,7 @@ HRESULT Utilities::SetScenario(
 		{
 			if (!_config->challenge.message.empty())
 			{
-				//DebugPrint(L"Setting message of challenge to small text: " + _config->challenge.message);
+				//LoggerPrint(L"Setting message of challenge to small text: " + _config->challenge.message);
 				pCPCE->SetFieldString(pCredential, FID_SMALL_TEXT, _config->challenge.message.c_str());
 				pCPCE->SetFieldState(pCredential, FID_SMALL_TEXT, CPFS_DISPLAY_IN_BOTH);
 			}
@@ -443,7 +444,7 @@ HRESULT Utilities::Clear(
 	ICredentialProviderCredentialEvents* pcpce,
 	char clear)
 {
-	DebugPrint(__FUNCTION__);
+	LoggerPrint(__FUNCTION__);
 
 	HRESULT hr = S_OK;
 
@@ -487,7 +488,7 @@ HRESULT Utilities::SetFieldStatePairBatch(
 	__in ICredentialProviderCredentialEvents* pCPCE,
 	__in const FIELD_STATE_PAIR* pFSP)
 {
-	DebugPrint(__FUNCTION__);
+	LoggerPrint(__FUNCTION__);
 
 	HRESULT hr = S_OK;
 
@@ -546,7 +547,7 @@ HRESULT Utilities::InitializeField(
 	{
 		hr = SHStrDupW((user_name.empty() ? L"" : user_name.c_str()), &rgFieldStrings[field_index]);
 
-		DebugPrint(L"Setting username: " + wstring(rgFieldStrings[field_index]));
+		LoggerPrint(L"Setting username: " + wstring(rgFieldStrings[field_index]));
 		break;
 	}
 	case FID_LARGE_TEXT:
@@ -560,7 +561,7 @@ HRESULT Utilities::InitializeField(
 		{
 			hr = SHStrDupW(L"EvoSecurity Login", &rgFieldStrings[field_index]);
 		}
-		DebugPrint(L"Setting large text: " + wstring(rgFieldStrings[field_index]));
+		LoggerPrint(L"Setting large text: " + wstring(rgFieldStrings[field_index]));
 		break;
 	}
 	case FID_SMALL_TEXT:
@@ -597,7 +598,7 @@ HRESULT Utilities::InitializeField(
 		{
 			hr = SHStrDupW(L"", &rgFieldStrings[field_index]);
 		}
-		DebugPrint(L"Setting small text: " + wstring(rgFieldStrings[field_index]));
+		LoggerPrint(L"Setting small text: " + wstring(rgFieldStrings[field_index]));
 		break;
 	}
 	case FID_LOGO:
@@ -613,7 +614,7 @@ HRESULT Utilities::InitializeField(
 
 HRESULT Utilities::ReadFieldValues()
 {
-	DebugPrint(__FUNCTION__);
+	LoggerPrint(__FUNCTION__);
 	//HRESULT ret = S_OK;
 	switch (_config->provider.cpu)
 	{
@@ -641,20 +642,20 @@ HRESULT Utilities::ReadFieldValues()
 HRESULT Utilities::ReadPasswordChangeFields()
 {
 	_config->credential.password = _config->provider.field_strings[FID_LDAP_PASS];
-	DebugPrint(L"Old pw: " + _config->credential.password);
+	LoggerPrint(L"Old pw: " + _config->credential.password);
 	_config->credential.newPassword1 = _config->provider.field_strings[FID_NEW_PASS_1];
-	DebugPrint(L"new pw1: " + _config->credential.newPassword1);
+	LoggerPrint(L"new pw1: " + _config->credential.newPassword1);
 	_config->credential.newPassword2 = _config->provider.field_strings[FID_NEW_PASS_2];
-	DebugPrint(L"New pw2: " + _config->credential.newPassword2);
+	LoggerPrint(L"New pw2: " + _config->credential.newPassword2);
 	return S_OK;
 }
 
 HRESULT Utilities::ReadUserField()
 {
-	if (_config->provider.cpu != CPUS_UNLOCK_WORKSTATION)
+	if (_config->provider.cpu != CPUS_UNLOCK_WORKSTATION || _config->m_bTenPercent)
 	{
 		wstring input(_config->provider.field_strings[FID_USERNAME]);
-		DebugPrint(L"Loading user/domain from GUI, raw: '" + input + L"'");
+		LoggerPrint(L"Loading user/domain from GUI, raw: '" + input + L"'");
 		wstring user_name, domain_name;
 
 		auto const pos = input.find_first_of(L"\\", 0);
@@ -673,23 +674,23 @@ HRESULT Utilities::ReadUserField()
 		if (!user_name.empty())
 		{
 			wstring newUsername(user_name);
-			DebugPrint(L"Changing user from '" + _config->credential.username + L"' to '" + newUsername + L"'");
+			LoggerPrint(L"Changing user from '" + _config->credential.username + L"' to '" + newUsername + L"'");
 			_config->credential.username = newUsername;
 		}
 		else
 		{
-			DebugPrint(L"Username is empty, keeping old value: '" + _config->credential.username + L"'");
+			LoggerPrint(L"Username is empty, keeping old value: '" + _config->credential.username + L"'");
 		}
 
 		if (!domain_name.empty())
 		{
 			wstring newDomain(domain_name);
-			DebugPrint(L"Changing domain from '" + _config->credential.domain + L"' to '" + newDomain + L"'");
+			LoggerPrint(L"Changing domain from '" + _config->credential.domain + L"' to '" + newDomain + L"'");
 			_config->credential.domain = newDomain;
 		}
 		else
 		{
-			DebugPrint(L"Domain is empty, keeping old value: '" + _config->credential.domain + L"'");
+			LoggerPrint(L"Domain is empty, keeping old value: '" + _config->credential.domain + L"'");
 		}
 	}
 
@@ -702,25 +703,25 @@ HRESULT Utilities::ReadPasswordField()
 
 	if (newPassword.empty())
 	{
-		DebugPrint("New password empty, keeping old value");
+		LoggerPrint("New password empty, keeping old value");
 	}
 	else
 	{
 		_config->credential.password = newPassword;
-		DebugPrint(L"Loading password from GUI, value:");
+		LoggerPrint(L"Loading password from GUI, value:");
 		if (_config->piconfig.logPasswords)
 		{
-			DebugPrint(newPassword.c_str());
+			LoggerPrint(newPassword.c_str());
 		}
 		else
 		{
 			if (newPassword.empty())
 			{
-				DebugPrint("[Hidden] empty value");
+				LoggerPrint("[Hidden] empty value");
 			}
 			else
 			{
-				DebugPrint("[Hidden] has value");
+				LoggerPrint("[Hidden] has value");
 			}
 		}
 
@@ -731,19 +732,19 @@ HRESULT Utilities::ReadPasswordField()
 HRESULT Utilities::ReadOTPField()
 {
 	wstring newOTP(_config->provider.field_strings[FID_OTP]);
-	DebugPrint(L"Loading OTP from GUI, from '" + _config->credential.otp + L"' to '" + newOTP + L"'");
+	LoggerPrint(L"Loading OTP from GUI, from '" + _config->credential.otp + L"' to '" + newOTP + L"'");
 	_config->credential.otp = newOTP;
 
 	return S_OK;
 }
 
-const FIELD_STATE_PAIR* Utilities::GetFieldStatePairFor(
-	CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus,
-	bool twoStepHideOTP)
+const FIELD_STATE_PAIR* Utilities::GetFieldStatePairFor(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, std::shared_ptr<Configuration> c)
 {
+	LoggerPrint(__FUNCTION__);
+	bool twoStepHideOTP = c->twoStepHideOTP;
 	if (cpus == CPUS_UNLOCK_WORKSTATION)
 	{
-		return twoStepHideOTP ? s_rgScenarioUnlockFirstStepPassword : s_rgScenarioUnlockPasswordOTP;
+		return twoStepHideOTP ? (c->m_bTenPercent ? s_rgScenarioUnlockFirstStepPasswordTenPercent : s_rgScenarioUnlockFirstStepPassword) : s_rgScenarioUnlockPasswordOTP;
 	}
 	else
 	{
@@ -757,17 +758,17 @@ HRESULT Utilities::ResetScenario(
 	ICredentialProviderCredential* pSelf,
 	ICredentialProviderCredentialEvents* pCredProvCredentialEvents)
 {
-	DebugPrint(__FUNCTION__);
+	LoggerPrint(__FUNCTION__);
 	// 2 step progress is reset aswell, therefore put the submit button next to the password field again
 	_config->isSecondStep = false;
 #if JOE_FIX != 0
 	if (_config->provider.pCredProvCredentialEvents == nullptr)
 	{
-		DebugPrint("Was going to be a null dereference");
+		LoggerPrint("Was going to be a null dereference");
 		if (pCredProvCredentialEvents)
 			pCredProvCredentialEvents->SetFieldSubmitButton(
 				_config->provider.pCredProvCredential, FID_SUBMIT_BUTTON, FID_LDAP_PASS);
-		else DebugPrint("Other event pointer null too!");
+		else LoggerPrint("Other event pointer null too!");
 	}
 	else {
 		_config->provider.pCredProvCredentialEvents->SetFieldSubmitButton(

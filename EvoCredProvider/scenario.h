@@ -116,6 +116,21 @@ static const FIELD_STATE_PAIR s_rgScenarioUnlockFirstStepPassword[] =
 	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// FID_SUBTEXT
 };
 
+static const FIELD_STATE_PAIR s_rgScenarioUnlockFirstStepPasswordTenPercent[] =
+{
+	{ CPFS_DISPLAY_IN_BOTH, CPFIS_NONE },					// FID_LOGO
+	{ CPFS_DISPLAY_IN_BOTH, CPFIS_NONE },					// FID_LARGE_TEXT
+	{ CPFS_DISPLAY_IN_BOTH, CPFIS_NONE },					// FID_SMALL_TEXT
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// FID_USERNAME
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_FOCUSED },		// FID_LDAP_PASS
+	{ CPFS_HIDDEN, CPFIS_NONE },							// FID_OTP
+	{ CPFS_HIDDEN, CPFIS_NONE },							// FID_NEW_PASS_1
+	{ CPFS_HIDDEN, CPFIS_NONE },							// FID_NEW_PASS_1
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// FID_SUBMIT_BUTTON
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// FID_SUBTEXT
+};
+
+
 // Field descriptors for unlock and logon.
 // The first field is the index of the field.
 // The second is the type of the field.

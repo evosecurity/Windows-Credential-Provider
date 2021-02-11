@@ -96,9 +96,6 @@
     <ClCompile Include="CoreLibs\Challenge.cpp">
       <Filter>CoreLibs</Filter>
     </ClCompile>
-    <ClCompile Include="LoadPNG.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="EvoCredProvider.rc">
@@ -124,6 +121,15 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="tile.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\evologo-windows.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\tile.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\..\erase\evo-logo-192.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

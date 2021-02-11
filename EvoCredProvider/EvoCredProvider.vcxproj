@@ -260,7 +260,6 @@
     </ClCompile>
     <ClCompile Include="EvoCredential.cpp" />
     <ClCompile Include="helpers.cpp" />
-    <ClCompile Include="LoadPNG.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -308,6 +307,9 @@
     <Midl Include="EvoCredProvider.idl" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\erase\evo-logo-192.png" />
+    <Image Include="res\evologo-windows.bmp" />
+    <Image Include="res\tile.bmp" />
     <Image Include="tile.bmp" />
   </ItemGroup>
   <ItemGroup>

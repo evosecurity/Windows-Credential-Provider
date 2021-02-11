@@ -400,7 +400,7 @@ STDMETHODIMP CProvider::GetCredentialAt(
 
 		hr = m_pCredential->Initialize(
 			s_rgScenarioCredProvFieldDescriptors,
-			Utilities::GetFieldStatePairFor(usage_scenario, m_config->twoStepHideOTP),
+			Utilities::GetFieldStatePairFor(usage_scenario, m_config),
 			serializedUser, serializedDomain, serializedPass);
 	}
 	else
