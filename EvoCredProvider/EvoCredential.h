@@ -74,11 +74,8 @@ public:
 	HRESULT ReportResult(NTSTATUS ntsStatus, NTSTATUS ntsSubstatus, PWSTR* ppwszOptionalStatusText, CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon);
 	HRESULT Connect(IQueryContinueWithStatus* pqcws);
 	HRESULT GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
+
 	void PushEvoAuthenticationCallback(bool success);
-
-	HRESULT ConnectOrig(IQueryContinueWithStatus* pqcws);
-	HRESULT GetSerializationOrig(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
-
 	void PushAuthenticationCallbackOrig(bool success);
 protected:
 

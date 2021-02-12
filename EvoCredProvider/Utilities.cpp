@@ -373,8 +373,8 @@ HRESULT Utilities::SetScenario(
 	}
 	else
 	{
-		const int hideFullName = _config->hideFullName;
-		const int hideDomain = _config->hideDomainName;
+		const bool hideFullName = _config->hideFullName || _config->m_bTenPercent;
+		const bool hideDomain = _config->hideDomainName ;
 
 		// Fill the textfields with text depending on configuration
 		// Large text for username@domain, username or nothing

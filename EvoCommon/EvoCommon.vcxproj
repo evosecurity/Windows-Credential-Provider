@@ -169,6 +169,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="RegistryReader.h" />
     <ClInclude Include="Shared.h" />
+    <ClInclude Include="VersionInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="decrypt.cpp" />
