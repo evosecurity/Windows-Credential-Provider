@@ -3,9 +3,7 @@
 #pragma once
 #include "resource.h"       // main symbols
 
-
-
-#include "TestCredProvider_i.h"
+#include "EvoCredProvider_i.h"
 
 class Configuration;
 class CEvoCredential;
