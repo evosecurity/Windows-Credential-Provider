@@ -76,7 +76,6 @@ public:
 	HRESULT GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
 
 	void PushEvoAuthenticationCallback(bool success);
-	void PushAuthenticationCallbackOrig(bool success);
 protected:
 
 	bool IsAccountExcluded();

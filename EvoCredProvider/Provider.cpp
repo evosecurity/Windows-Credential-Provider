@@ -11,6 +11,8 @@
 #include "helpers.h"
 #include "guids.h"
 
+#define DesperatePrint(x) 
+
 using namespace std;
 
 GUID CLSID_EvoCredentialProvider = __uuidof(Provider);
@@ -31,7 +33,7 @@ CProvider::~CProvider()
 
 void CProvider::_GetSerializedCredentials(PWSTR* username, PWSTR* password, PWSTR* domain)
 {
-	DebugPrint(__FUNCTION__);
+	DesperatePrint(__FUNCTION__);
 
 	if (username)
 	{
@@ -77,10 +79,10 @@ STDMETHODIMP CProvider::SetUsageScenario(_CREDENTIAL_PROVIDER_USAGE_SCENARIO cpu
 {
 	m_cpus = cpus;
 	m_dwCpusFlags = dwFlags;
-	DebugPrint(string(__FUNCTION__) + ": " + Shared::CPUStoString(cpus));
+	DesperatePrint(string(__FUNCTION__) + ": " + Shared::CPUStoString(cpus));
 #ifdef _DEBUG
-	DebugPrint(string(__FUNCTION__) + ": " + Shared::CPUStoString(cpus));
-	m_config->printConfiguration();
+	DesperatePrint(string(__FUNCTION__) + ": " + Shared::CPUStoString(cpus));
+	//m_config->printConfiguration();
 #endif
 	HRESULT hr = E_INVALIDARG;
 
@@ -110,44 +112,44 @@ STDMETHODIMP CProvider::SetUsageScenario(_CREDENTIAL_PROVIDER_USAGE_SCENARIO cpu
 	{
 		if (!Shared::IsRequiredForScenario(cpus, PROVIDER))
 		{
-			DebugPrint("CP is not enumerated because of the configuration for this scenario.");
+			DesperatePrint("CP is not enumerated because of the configuration for this scenario.");
 			hr = E_NOTIMPL;
 		}
 	}
 
-	DebugPrint("SetScenario result:");
-	DebugPrint(hr);
+	DesperatePrint("SetScenario result:");
+	DesperatePrint(hr);
 
 	return hr;
 }
 
 STDMETHODIMP CProvider::SetSerialization(_CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION const* pcpcs)
 {
-	DebugPrint(__FUNCTION__);
+	DesperatePrint(__FUNCTION__);
 	HRESULT result = E_NOTIMPL;
 	ULONG authPackage = NULL;
 	result = RetrieveNegotiateAuthPackage(&authPackage);
 
 	if (!SUCCEEDED(result))
 	{
-		DebugPrint("Failed to retrieve authPackage");
+		DesperatePrint("Failed to retrieve authPackage");
 		return result;
 	}
 
 	if (m_config->provider.cpu == CPUS_CREDUI)
 	{
-		DebugPrint("CPUS_CREDUI");
+		DesperatePrint("CPUS_CREDUI");
 
 		if (((m_config->provider.credPackFlags & CREDUIWIN_IN_CRED_ONLY) || (m_config->provider.credPackFlags & CREDUIWIN_AUTHPACKAGE_ONLY))
 			&& authPackage != pcpcs->ulAuthenticationPackage)
 		{
-			DebugPrint("authPackage invalid");
+			DesperatePrint("authPackage invalid");
 			return E_INVALIDARG;
 		}
 
 		if (m_config->provider.credPackFlags & CREDUIWIN_AUTHPACKAGE_ONLY)
 		{
-			DebugPrint("CPUS_CREDUI but not CREDUIWIN_AUTHPACKAGE_ONLY");
+			DesperatePrint("CPUS_CREDUI but not CREDUIWIN_AUTHPACKAGE_ONLY");
 			result = S_FALSE;
 		}
 	}
@@ -161,7 +163,7 @@ STDMETHODIMP CProvider::SetSerialization(_CREDENTIAL_PROVIDER_CREDENTIAL_SERIALI
 			{
 				BYTE* nativeSerialization = nullptr;
 				DWORD nativeSerializationSize = 0;
-				DebugPrint("Serialization found from remote");
+				DesperatePrint("Serialization found from remote");
 
 				if (m_config->provider.credPackFlags == CPUS_CREDUI && (m_config->provider.credPackFlags & CREDUIWIN_PACK_32_WOW))
 				{
@@ -197,14 +199,14 @@ STDMETHODIMP CProvider::SetSerialization(_CREDENTIAL_PROVIDER_CREDENTIAL_SERIALI
 			}
 		}
 	}
-	DebugPrint(result);
+	DesperatePrint(result);
 
 	return result;
 }
 
 STDMETHODIMP CProvider::Advise(ICredentialProviderEvents* pEvents, UINT_PTR upCookie)
 {
-	DebugPrint(__FUNCTION__);
+	DesperatePrint(__FUNCTION__);
 
 	// should this member be CComPtr ??? probably!!!
 	m_config->provider.pCredentialProviderEvents = pEvents;
@@ -223,7 +225,7 @@ STDMETHODIMP CProvider::UnAdvise(void)
 
 STDMETHODIMP CProvider::GetFieldDescriptorCount(unsigned long* pdwCount)
 {
-	DebugPrint(__FUNCTION__);
+	DesperatePrint(__FUNCTION__);
 
 	*pdwCount = FID_NUM_FIELDS;
 
@@ -287,7 +289,7 @@ STDMETHODIMP CProvider::GetCredentialCount(
 	__out BOOL* pbAutoLogonWithDefault
 )
 {
-	DebugPrint(__FUNCTION__);
+	DesperatePrint(__FUNCTION__);
 
 	HRESULT hr = S_OK;
 
@@ -315,7 +317,7 @@ STDMETHODIMP CProvider::GetCredentialCount(
 	}
 
 
-	DebugPrint(hr);
+	DesperatePrint(hr);
 	return hr;
 }
 
@@ -324,7 +326,7 @@ STDMETHODIMP CProvider::GetCredentialAt(
 	__deref_out ICredentialProviderCredential** ppcpc
 )
 {
-	DebugPrint(__FUNCTION__);
+	DesperatePrint(__FUNCTION__);
 
 	HRESULT hr = E_FAIL;
 	const CREDENTIAL_PROVIDER_USAGE_SCENARIO usage_scenario = m_config->provider.cpu;
@@ -332,18 +334,18 @@ STDMETHODIMP CProvider::GetCredentialAt(
 
 	if (!m_pCredential)
 	{
-		DebugPrint("Checking for serialized credentials");
+		DesperatePrint("Checking for serialized credentials");
 
 		PWSTR serializedUser, serializedPass, serializedDomain;
 		_GetSerializedCredentials(&serializedUser, &serializedPass, &serializedDomain);
 
-		DebugPrint("Checking for missing credentials");
+		DesperatePrint("Checking for missing credentials");
 
 		if (usage_scenario == CPUS_UNLOCK_WORKSTATION && serializedUser == nullptr)
 		{
 			if (serializedUser == nullptr)
 			{
-				DebugPrint("Looking-up missing user name from session");
+				DesperatePrint("Looking-up missing user name from session");
 
 				DWORD dwLen = 0;
 
@@ -359,7 +361,7 @@ STDMETHODIMP CProvider::GetCredentialAt(
 
 			if (serializedDomain == nullptr)
 			{
-				DebugPrint("Looking-up missing domain name from session");
+				DesperatePrint("Looking-up missing domain name from session");
 
 				DWORD dwLen = 0;
 
@@ -377,7 +379,7 @@ STDMETHODIMP CProvider::GetCredentialAt(
 		{
 			if (serializedDomain == nullptr)
 			{
-				DebugPrint("Looking-up missing domain name from computer");
+				DesperatePrint("Looking-up missing domain name from computer");
 
 				NETSETUP_JOIN_STATUS join_status;
 
@@ -388,12 +390,12 @@ STDMETHODIMP CProvider::GetCredentialAt(
 				{
 					serializedDomain = nullptr;
 				}
-				DebugPrint("Found domain:");
-				DebugPrint(serializedDomain);
+				DesperatePrint("Found domain:");
+				DesperatePrint(serializedDomain);
 			}
 		}
 
-		DebugPrint("Initializing CCredential");
+		DesperatePrint("Initializing CCredential");
 
 		CEvoCredential* pCredential = NULL;
 		CEvoCredential::CreateCredential(m_config, &m_pCredential);
@@ -408,23 +410,23 @@ STDMETHODIMP CProvider::GetCredentialAt(
 		hr = S_OK;
 	}
 
-	DebugPrint("Checking for successful initialization");
+	DesperatePrint("Checking for successful initialization");
 
 	if (FAILED(hr))
 	{
-		DebugPrint("Initialization failed");
+		DesperatePrint("Initialization failed");
 		return hr;
 	}
 
-	DebugPrint("Checking for successful instantiation");
+	DesperatePrint("Checking for successful instantiation");
 
 	if (!m_pCredential)
 	{
-		DebugPrint("Instantiation failed");
+		DesperatePrint("Instantiation failed");
 		return E_OUTOFMEMORY;
 	}
 
-	DebugPrint("Returning interface to credential");
+	DesperatePrint("Returning interface to credential");
 
 	if ((dwIndex == 0) && ppcpc)
 	{
@@ -432,12 +434,12 @@ STDMETHODIMP CProvider::GetCredentialAt(
 		//           either way, it is the same object if someone QIs for either interface, it will succeed
 		if (usage_scenario == CPUS_CREDUI)
 		{
-			DebugPrint("CredUI: returning an IID_ICredentialProviderCredential");
+			DesperatePrint("CredUI: returning an IID_ICredentialProviderCredential");
 			hr = m_pCredential->QueryInterface(IID_ICredentialProviderCredential, reinterpret_cast<void**>(ppcpc));
 		}
 		else
 		{
-			DebugPrint("Non-CredUI: returning an IID_IConnectableCredentialProviderCredential");
+			DesperatePrint("Non-CredUI: returning an IID_IConnectableCredentialProviderCredential");
 			hr = m_pCredential->QueryInterface(IID_IConnectableCredentialProviderCredential, reinterpret_cast<void**>(ppcpc));
 			//hr = _pccCredential->QueryInterface(IID_ICredentialProviderCredential, reinterpret_cast<void **>(ppcpc));
 		}
@@ -447,20 +449,20 @@ STDMETHODIMP CProvider::GetCredentialAt(
 		hr = E_INVALIDARG;
 	}
 
-	DebugPrint(hr);
+	DesperatePrint(hr);
 
 	return hr;
 }
 
 bool CProvider::_SerializationAvailable(SERIALIZATION_AVAILABLE_FOR checkFor)
 {
-	DebugPrint(__FUNCTION__);
+	DesperatePrint(__FUNCTION__);
 
 	bool result = false;
 
 	if (!m_pkiulSetSerialization)
 	{
-		DebugPrint("No serialized creds set");
+		DesperatePrint("No serialized creds set");
 	}
 	else
 	{

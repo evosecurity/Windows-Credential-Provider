@@ -75,6 +75,35 @@ nlohmann::json tryParse(const std::string& in)
 }
 
 
+static CharWidthExtLogFunc pCharWidthExtLogFunc = nullptr;
+void EvoAPI::SetCharWidthExtLogFunc(CharWidthExtLogFunc pFunc)
+{
+    pCharWidthExtLogFunc = pFunc;
+}
+
+void DoTheLog(LPCSTR message, LPCSTR filename, int lineno)
+{
+#ifdef _DEBUG
+    bool flag = false;
+#else
+    bool flag = true;
+#endif
+
+    if (pCharWidthExtLogFunc)
+    {
+        pCharWidthExtLogFunc(message, filename, lineno, flag);
+    }
+}
+
+void DoTheLog(std::string message, LPCSTR filename, int lineno)
+{
+    DoTheLog(message.c_str(), filename, lineno);
+}
+
+#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#define LogAlways(message) DoTheLog(message, __FILENAME__, __LINE__)
+
+
 std::wstring EvoAPI::DefaultBaseUrl = L"https://api.evosecurity.com/api/v1/desktop/";
 std::wstring EvoAPI::DefaultEnvironmentUrl = L"https://evo.evosecurity.io";
 
@@ -87,16 +116,6 @@ EvoAPI::EvoAPI(LPCWSTR pwzBaseUrl, LPCWSTR pwzEnvironmentUrl)
 EvoAPI::EvoAPI(EvoString baseUrl, EvoString environmentUrl)
     : EvoAPI(baseUrl.c_str(), environmentUrl.c_str()) // delegated constructor
 {
-}
-
-void EvoAPI::DebugPrint(LPCSTR)
-{
-    // stubbed for nothing
-}
-
-void EvoAPI::ReleaseDebugPrint(const std::string& s)
-{
-
 }
 
 #pragma warning(disable : 4996)
@@ -113,7 +132,7 @@ DWORD EvoAPI::GetDefaultAccessType()
     if (info.dwMajorVersion == 6 && info.dwMinorVersion <= 2)
     {
         dwAccessType = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-        DebugPrint("Setting access type to WINHTTP_ACCESS_TYPE_DEFAULT_PROXY");
+        //LogPrint(LOG_DEBUG, "Setting access type to WINHTTP_ACCESS_TYPE_DEFAULT_PROXY");
     }
     return dwAccessType;
 }
@@ -131,7 +150,7 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 
     if (!hSession)
     {
-        ReleaseDebugPrint("WinHttpOpen failure: " + to_string(GetLastError()));
+        LogAlways("WinHttpOpen failure: " + to_string(GetLastError()));
         m_dwLastError = SETUP_ERROR;
         return evoApiResponse;
     }
@@ -145,7 +164,7 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 
     if (!hConnect)
     {
-        ReleaseDebugPrint("WinHttpConnect failure: " + to_string(GetLastError()));
+        LogAlways("WinHttpConnect failure: " + to_string(GetLastError()));
         m_dwLastError = SETUP_ERROR;
         return evoApiResponse;
     }
@@ -160,7 +179,7 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 
     if (!hRequest)
     {
-        ReleaseDebugPrint("WinHttpOpenRequest failure: " + to_string(GetLastError()));
+        LogAlways("WinHttpOpenRequest failure: " + to_string(GetLastError()));
         m_dwLastError = SETUP_ERROR;
         return evoApiResponse;
 
@@ -169,7 +188,7 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
     DWORD dwReqOpts = 0;
     if (!WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwReqOpts, sizeof(DWORD)))
     {
-        ReleaseDebugPrint("WinHttpOpenRequest failure: " + to_string(GetLastError()));
+        LogAlways("WinHttpSetOptionRequest failure: " + to_string(GetLastError()));
         m_dwLastError = SETUP_ERROR;
         return evoApiResponse;//ENDPOINT_ERROR_SETUP_ERROR;
     }
@@ -188,17 +207,16 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 
     if (m_bIgnoreUnknownCA || m_bIgnoreInvalidCN) {
         if (!WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwSSLFlags, sizeof(DWORD))) {
-            ReleaseDebugPrint("WinHttpSetOption for SSL flags failure: " + to_string(GetLastError()));
+                LogAlways("WinHttpSetOption for SSL flags failure: " + to_string(GetLastError()));
             m_dwLastError = SETUP_ERROR;
             return evoApiResponse;//ENDPOINT_ERROR_SETUP_ERROR;
         }
     }
 
     // Set timeouts on the request handle
-    if (!WinHttpSetTimeouts(hRequest, m_nResolveTimeOut, m_nConnectTimeOut, m_nSendTimeOut, m_nReceiveTimeOut))
+    if (!HasDefaultTimeouts() && !WinHttpSetTimeouts(hRequest, m_nResolveTimeOut, m_nConnectTimeOut, m_nSendTimeOut, m_nReceiveTimeOut))
     {
-        ReleaseDebugPrint("Failed to set timeouts on hRequest: " + to_string(GetLastError()));
-        // Continue with defaults
+        LogAlways("Failed to set timeouts on hRequest: " + to_string(GetLastError()));
     }
 
     LPCWSTR pwzAdditionalHeaders = L"Content-type: application/json\r\n";
@@ -211,13 +229,20 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 
     if (!bResults)
     {
-        ReleaseDebugPrint("WinHttpSendRequest failure: " + to_string(GetLastError()));
+        LogAlways("WinHttpSendRequest failure: " + to_string(GetLastError()));
         m_dwLastError = SERVER_UNAVAILABLE;
         return evoApiResponse;
     }
 
     if (bResults)
+    {
         bResults = WinHttpReceiveResponse(hRequest, NULL);
+        if (!bResults)
+        {
+            LogAlways("Immediate failure WinHtpReceiveResponse");
+        }
+
+    }
 
     if (bResults)
     {
@@ -247,14 +272,14 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
             dwSize = 0;
 
             if (!WinHttpQueryDataAvailable(hRequest, &dwSize)) {
-                ReleaseDebugPrint("WinHttpQueryDataAvailable failure: " + to_string(GetLastError()));
+                LogAlways("WinHttpQueryDataAvailable failure: " + to_string(GetLastError()));
                 evoApiResponse.sResponse = ""; //ENDPOINT_ERROR_RESPONSE_ERROR;
             }
 
             pszOutBuffer = new char[ULONGLONG(dwSize) + 1];
             if (!pszOutBuffer)
             {
-                ReleaseDebugPrint("WinHttpReadData out of memory: " + to_string(GetLastError()));
+                LogAlways("WinHttpReadData out of memory: " + to_string(GetLastError()));
                 evoApiResponse.sResponse = ""; // ENDPOINT_ERROR_RESPONSE_ERROR;
                 dwSize = 0;
             }
@@ -264,7 +289,7 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
                 ZeroMemory(pszOutBuffer, (ULONGLONG)dwSize + 1);
                 if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded))
                 {
-                    ReleaseDebugPrint("WinHttpReadData error: " + to_string(GetLastError()));
+                    LogAlways("WinHttpReadData error: " + to_string(GetLastError()));
                     evoApiResponse.sResponse = "";// ENDPOINT_ERROR_RESPONSE_ERROR;
                 }
                 else
@@ -280,8 +305,9 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 
     if (!bResults)
     {
-        ReleaseDebugPrint("WinHttp Result error: " + to_string(GetLastError()));
-        evoApiResponse.sResponse = "";// ENDPOINT_ERROR_RESPONSE_ERROR;
+        DWORD dwLastError = GetLastError();
+        LogAlways("WinHttp Result error: " + to_string(dwLastError));
+        evoApiResponse.sResponse = "";
     }
 
     if (evoApiResponse.sResponse.empty())
@@ -307,10 +333,17 @@ bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPa
     if (j == nullptr)
         return false;
 
-    response.bMFAEnabled = j["mfa_enabled"];
-    response.request_id = j["request_id"];
+    bool bRet = false;
+    try {
+        response.bMFAEnabled = j["mfa_enabled"];
+        response.request_id = j["request_id"];
+        bRet = true;
+    }
+    catch (...) {
+        LogAlways("Missing elements in authenticate payload.");
+    }
 
-    return true;
+    return bRet;
 }
 
 static std::wstring s2ws(std::string s)
@@ -337,6 +370,7 @@ bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUs
     if (j == nullptr)
         return false;
 
+    bool bRet = false;
     try
     {
         response.success =  j["success"];
@@ -347,12 +381,13 @@ bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUs
         response.salt = j["salt"];
         response.cipher = j["cipher"];
         response.domain = s2ws(j["domain"]);
+        bRet = true;
     }
     catch (...)
     {
-
+        LogAlways("Missing elements in validate_mfa payload");
     }
-    return true;
+    return bRet;
 }
 
 bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
@@ -370,6 +405,7 @@ bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
     if (j == nullptr)
         return false;
 
+    bool bRet = false;
     try
     {
         response.success =  j["success"];
@@ -380,12 +416,13 @@ bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
         response.salt = j["salt"];
         response.cipher = j["cipher"];
         response.domain = s2ws(j["domain"]);
+        bRet = true;
     }
     catch (...)
     {
-
+        LogAlways("Missing elements in check_login_response payload");
     }
-    return true;
+    return bRet;
 }
 
 void EvoAPI::SetCustomPort(int port)
@@ -427,15 +464,25 @@ std::wstring GetDomainOrMachineIncludingRegistry()
     if (!wsRegisty.empty())
         return wsRegisty;
 
+    std::wstring wsDomainName;
     GetComputerNameEx(ComputerNameDnsDomain, domainNameBuf, &bufSize);
     if (bufSize != 0)
-        return domainNameBuf;
+        wsDomainName = domainNameBuf;
 
-    bufSize = MAX_PATH;
-    GetComputerName(domainNameBuf, &bufSize);
-    if (bufSize != 0)
-        return domainNameBuf;
+    if (bufSize == 0) {
+        bufSize = MAX_PATH;
+        GetComputerName(domainNameBuf, &bufSize);
+        if (bufSize != 0)
+            wsDomainName = domainNameBuf;
+    }
 
+    if (!wsDomainName.empty())
+    {
+        std::transform(wsDomainName.begin(), wsDomainName.end(), wsDomainName.begin(),
+            [](wchar_t c) { return std::tolower(c); });
+
+        return wsDomainName;
+    }
 
     return L"";
 }

@@ -14,12 +14,30 @@
 
 using namespace std;
 
+
+void LogHookFunc(LPCSTR message, LPCSTR lpszFile, int lineno, bool flag)
+{
+	Logger::Get().log(message, lpszFile, lineno, flag);
+}
+
+void InitApiLogging()
+{
+	static bool bInitedApiLogging = false;
+	if (!bInitedApiLogging)
+	{
+		bInitedApiLogging = true;
+		EvoAPI::SetCharWidthExtLogFunc(LogHookFunc);
+	}
+}
+
 HRESULT CEvoCredential::CreateCredential(std::shared_ptr<Configuration> pConfig, CEvoCredential** ppCred)
 {
 	HRESULT hr;
 	CComObject<CEvoCredential>* pCred = NULL;
 	if (FAILED(hr = CComObject<CEvoCredential>::CreateInstance(&pCred)))
 		return hr;
+
+	InitApiLogging();
 
 	pCred->SetConfiguration(pConfig);
 
@@ -546,6 +564,22 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, std::shared_ptr<Config
 	return GetCredsFromPayload(response.data, response.salt, response.iv, config, user, pw);
 }
 
+void DebugPayloadCreds(const SecureWString& user, const SecureWString& pw, const std::wstring& domain)
+{
+#ifdef _DEBUG
+	wstring s(L"Payload user: ");
+	s += wstring(user.c_str());
+	DebugPrint(s);
+
+	s = L"Payload pw: ";
+	s += wstring(pw.c_str());
+	DebugPrint(s);
+
+	s = L"Payload domain: ";
+	s += wstring(domain);
+	DebugPrint(s);
+#endif
+}
 
 HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 {
@@ -598,6 +632,8 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	if (m_config->twoStepHideOTP && !m_config->isSecondStep) {
 		// is first step
 		DebugPrint("Connect First step");
+		DebugPrint(L"Base Url: " + m_config->baseUrl);
+		DebugPrint(L"Environment url: " + m_config->environmentUrl);
 
 		EvoAPI::AuthenticateResponse response;
 		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
@@ -628,7 +664,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 			SecureWString user, pw;
 			if (GetCredsFromPayload(response, m_config, user, pw))
 			{
-				ReleaseDebugPrint(L"Got creds from payload");
+				ReleaseDebugPrint(L"MFA creds from payload");
 
 				m_config->credential.validatedUsername = user;
 				m_config->credential.validatedPassword = pw;
@@ -636,22 +672,10 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 
 				_piStatus = EVOSOL_AUTH_SUCCESS;
 
-#ifdef _DEBUG
-				wstring s(L"Payload user: ");
-				s += wstring(user.c_str());
-				DebugPrint(s);
-
-				s = L"Payload pw: ";
-				s += wstring(pw.c_str());
-				DebugPrint(s);
-
-				s = L"Payload domain: ";
-				s += wstring(response.domain.c_str());
-				DebugPrint(s);
-#endif
+				DebugPayloadCreds(user, pw, response.domain);
 			}
 			else {
-				ReleaseDebugPrint("Could not get payload creds");
+				ReleaseDebugPrint("MFA could not get payload creds");
 			}
 		}
 		else
@@ -663,32 +687,6 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	DebugPrint("END Connect");
 	return S_OK;
 }
-
-void CEvoCredential::PushAuthenticationCallbackOrig(bool success)
-{
-	DebugPrint(__FUNCTION__);
-	if (success)
-	{
-		m_config->pushAuthenticationSuccessful = true;
-		m_config->doAutoLogon = true;
-		// When autologon is triggered, connect is called instantly, therefore bypass privacyIDEA on next run
-		m_config->bypassPrivacyIDEA = true;
-		m_config->provider.pCredentialProviderEvents->CredentialsChanged(m_config->provider.upAdviseContext);
-	}
-}
-
-void CEvoCredential::PushEvoAuthenticationCallback(bool success)
-{
-	DebugPrint(__FUNCTION__);
-	if (success)
-	{
-		m_config->pushAuthenticationSuccessful = true;
-		m_config->doAutoLogon = true;
-		m_config->bypassPrivacyIDEA = true;
-		m_config->provider.pCredentialProviderEvents->CredentialsChanged(m_config->provider.upAdviseContext);
-	}
-}
-
 
 HRESULT CEvoCredential::GetSerialization(
 	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
@@ -766,8 +764,7 @@ HRESULT CEvoCredential::GetSerialization(
 					// Prepare for the second step (input only OTP)
 					m_config->isSecondStep = true;
 					m_config->clearFields = false;
-					_util.SetScenario(m_config->provider.pCredProvCredential,
-						m_config->provider.pCredProvCredentialEvents,
+					_util.SetScenario(m_config->provider.pCredProvCredential, m_config->provider.pCredProvCredentialEvents,
 						SCENARIO::SECOND_STEP);
 					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
 				}
@@ -779,9 +776,15 @@ HRESULT CEvoCredential::GetSerialization(
 				int errorCode = 0;
 				wstring errorMessage;
 				bool isGerman = GetUserDefaultUILanguage() == 1031;
+				bool bRepeatStepTwo = false;
 				if (_piStatus == EVOSOL_AUTH_FAILURE)
 				{
 					errorMessage = m_config->defaultOTPFailureText;
+					if (m_config->m_bTenPercent)
+					{
+						// TODO: check if OTP is empty ... if so, maybe start from beginning...
+						bRepeatStepTwo = true;
+					}
 				}
 				// In this case the error is contained in a valid response from PI
 				else if (_piStatus == EVOSOL_AUTH_ERROR)
@@ -803,7 +806,15 @@ HRESULT CEvoCredential::GetSerialization(
 					errorMessage = isGerman ? L"Fehler beim Verbindungsaufbau!" : L"Error while setting up the connection!";
 				}
 				ShowErrorMessage(errorMessage, errorCode);
-				_util.ResetScenario(this, m_pCredProvCredentialEvents);
+				if (!bRepeatStepTwo)
+				{
+					_util.ResetScenario(this, m_pCredProvCredentialEvents);
+				}
+				else
+				{
+					// nothing or something?
+					DebugPrint(L"Repeating step two, clear = " + std::to_wstring(m_config->clearFields));
+				}
 				*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
 			}
 		}
@@ -867,4 +878,16 @@ HRESULT CEvoCredential::GetSerialization(
 	DebugPrint("CEvoCredential::GetSerialization - END");
 #endif //_DEBUG
 	return retVal;
+}
+
+void CEvoCredential::PushEvoAuthenticationCallback(bool success)
+{
+	DebugPrint(__FUNCTION__);
+	if (success)
+	{
+		m_config->pushAuthenticationSuccessful = true;
+		m_config->doAutoLogon = true;
+		m_config->bypassPrivacyIDEA = true;
+		m_config->provider.pCredentialProviderEvents->CredentialsChanged(m_config->provider.upAdviseContext);
+	}
 }

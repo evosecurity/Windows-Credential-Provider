@@ -41,7 +41,6 @@ bool CheckLogin(std::string request_id, EvoAPI::CheckLoginResponse& response)
     return evoapi.CheckLoginRequest(request_id.c_str(), response);
 }
 
-
 extern void TestJson();
 
 std::string wstring_to_string(const std::wstring& ws)
@@ -98,6 +97,11 @@ void WriteBasicResponse(const EvoAPI::BasicResponse& resp)
     cout << "Http code: " << resp.httpStatus << ", raw_response: " << resp.raw_response << endl;
 }
 
+void TheFuncExtToLog(LPCSTR message, LPCSTR filename, int lineno, bool flag)
+{
+    cout << "[" << filename << ":" << lineno << "] " << message << endl;
+}
+
 int _tmain(int argc, wchar_t* argv[])
 {
     std::wstring domainNameBuf = GetDomainOrMachineIncludingRegistry();
@@ -132,53 +136,17 @@ int _tmain(int argc, wchar_t* argv[])
         wcout << L"Password: " << GlobalPassword << endl;
     }
 
+    //EvoAPI::SetCharWidthLog(TheFuncToLog);
+    EvoAPI::SetCharWidthExtLogFunc(TheFuncExtToLog);
 
-    EvoAPI::ValidateMFAResponse validateMfaResponse;
-    bool bValidateMFA = ValidateMFA(validateMfaResponse);
-    WriteBasicResponse(validateMfaResponse);
-    if (bValidateMFA) {
-        cout << "validate_mfa succeeded" << endl;
-
-        secure_string user, pw;
-        if (GetCredsFromPayload(validateMfaResponse, user, pw))
-        {
-            cout << "user: " << user << endl << "pw:   " << pw << endl;
-        }
-        else
-        {
-            cout << "failed getting payload creds" << endl;
-        }
-    }
-    else {
-        cout << "validate_mfa failed" << endl;
-    }
-
-    EvoAPI::AuthenticateResponse authenticateResponse;
-    bool bAuth = Authenticate(authenticateResponse);
-    WriteBasicResponse(authenticateResponse);
-    if ( bAuth && !authenticateResponse.request_id.empty())
     {
-        cout << "Authenticating: " << authenticateResponse.request_id << endl;
+        cout << "Testing validate_mfa" << endl;
+        EvoAPI::ValidateMFAResponse validateMfaResponse;
+        bool bValidateMFA = ValidateMFA(validateMfaResponse);
+        WriteBasicResponse(validateMfaResponse);
+        if (bValidateMFA) {
+            cout << "validate_mfa succeeded" << endl;
 
-        bool LoginGood = false;
-        EvoAPI::CheckLoginResponse loginResponse;
-        for (int i = 0; i < 10; ++i)
-        {
-            Sleep(1000);
-            cout << "Checking ...  " << endl;
-            LoginGood = CheckLogin(authenticateResponse.request_id, loginResponse);
-            WriteBasicResponse(loginResponse);
-            if (LoginGood)
-            {
-                cout << "\nChecked ok" << endl;
-                break;
-            }
-            else {
-            }
-        }
-
-        if (LoginGood)
-        {
             secure_string user, pw;
             if (GetCredsFromPayload(validateMfaResponse, user, pw))
             {
@@ -186,12 +154,55 @@ int _tmain(int argc, wchar_t* argv[])
             }
             else
             {
-                cout << "Failed to get creds" << endl;
+                cout << "failed getting payload creds" << endl;
             }
         }
+        else {
+            cout << "validate_mfa failed" << endl;
+        }
     }
-    else {
-        cout << "Authenticate failed ..." << endl;
-        cout << "Http response: " << authenticateResponse.httpStatus << ", message: " << authenticateResponse.raw_response <<  endl;
+
+    {
+        EvoAPI::AuthenticateResponse authenticateResponse;
+        bool bAuth = Authenticate(authenticateResponse);
+        WriteBasicResponse(authenticateResponse);
+        if (bAuth && !authenticateResponse.request_id.empty())
+        {
+            cout << "Authenticating: " << authenticateResponse.request_id << endl;
+
+            bool LoginGood = false;
+            EvoAPI::CheckLoginResponse checkLoginResponse;
+            for (int i = 0; i < 10; ++i)
+            {
+                Sleep(1000);
+                cout << "Checking ...  " << endl;
+                LoginGood = CheckLogin(authenticateResponse.request_id, checkLoginResponse);
+                WriteBasicResponse(checkLoginResponse);
+                if (LoginGood)
+                {
+                    cout << "\nChecked ok" << endl;
+                    break;
+                }
+                else {
+                }
+            }
+
+            if (LoginGood)
+            {
+                secure_string user, pw;
+                if (GetCredsFromPayload(checkLoginResponse, user, pw))
+                {
+                    cout << "user: " << user << endl << "pw:   " << pw << endl;
+                }
+                else
+                {
+                    cout << "Failed to get creds" << endl;
+                }
+            }
+        }
+        else {
+            cout << "Authenticate failed ..." << endl;
+            cout << "Http response: " << authenticateResponse.httpStatus << ", message: " << authenticateResponse.raw_response << endl;
+        }
     }
 }

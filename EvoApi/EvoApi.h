@@ -2,6 +2,8 @@
 
 #include "../EvoCommon/EvoSecureString.h"
 
+typedef void(*CharWidthExtLogFunc)(LPCSTR message, LPCSTR file, int lineNum, bool bRelease);
+
 class EvoAPI
 {
     using EvoString = std::wstring;
@@ -11,9 +13,6 @@ public:
 
     enum ErrorType { NONE, SETUP_ERROR, SERVER_UNAVAILABLE };
 
-    void DebugPrint(LPCSTR);
-
-    void ReleaseDebugPrint(const std::string& s);
 
     DWORD GetDefaultAccessType();
 
@@ -82,6 +81,9 @@ public:
 
     void SetCustomPort(int port);
 
+
+    static void SetCharWidthExtLogFunc(CharWidthExtLogFunc pFunc);
+
 protected:
     EvoString m_strBaseUrl;
     EvoString m_strEnvironmentUrl;
@@ -90,10 +92,24 @@ protected:
     int m_nCustomPort = 0;
     bool m_bIgnoreUnknownCA = false;
     bool m_bIgnoreInvalidCN = false;
-    int m_nResolveTimeOut = 0;
-    int m_nConnectTimeOut = 60;
-    int m_nSendTimeOut = 30;
-    int m_nReceiveTimeOut = 30;
+
+    // 4 default values according to documentation for WinHttpSetTimeout
+    const int RESOLOVE_TIMEOUT = 0;
+    const int CONNECT_TIMEOUT = 60000;
+    const int SEND_TIMEOUT = 30000;
+    const int RECEIVE_TIMEOUT = 30000;
+
+    int m_nResolveTimeOut = RESOLOVE_TIMEOUT;
+
+    // the next 3 values were multiplied by 100, probably should be 1000 because timeout values are in milliseconds
+    int m_nConnectTimeOut = CONNECT_TIMEOUT; 
+    int m_nSendTimeOut = SEND_TIMEOUT; 
+    int m_nReceiveTimeOut = RECEIVE_TIMEOUT;
+
+    bool HasDefaultTimeouts() const
+    {
+        return m_nResolveTimeOut != RESOLOVE_TIMEOUT || m_nConnectTimeOut != CONNECT_TIMEOUT || m_nSendTimeOut != SEND_TIMEOUT || m_nReceiveTimeOut != RECEIVE_TIMEOUT;
+    }
 };
 
 std::wstring GetDomainOrMachineIncludingRegistry();
