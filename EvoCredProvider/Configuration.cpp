@@ -113,8 +113,7 @@ Configuration::Configuration()
 	// Config for PrivacyIDEA
 	rkey.Get(L"hostname", piconfig.hostname);
 	// Check if the path contains the placeholder, if so replace with nothing
-	rkey.Get(L"path", tmp);
-	piconfig.path = (tmp == L"/path/to/pi" ? L"" : tmp);
+	rkey.Get(L"path", piconfig.path);
 
 	rkey.Get(L"ssl_ignore_unknown_ca", piconfig.ignoreUnknownCA);
 	rkey.Get(L"ssl_ignore_invalid_cn", piconfig.ignoreInvalidCN);
@@ -131,6 +130,7 @@ Configuration::Configuration()
 	rkey.Get(L"excluded_account", excludedAccount);
 
 	rkey.Get(L"specialKey", specialKey);
+	rkey.Get(L"environmentUrl", environmentUrl);
 
 	MakeBaseUrl();
 
