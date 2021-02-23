@@ -118,6 +118,11 @@ EvoAPI::EvoAPI(EvoString baseUrl, EvoString environmentUrl)
 {
 }
 
+void EvoAPI::SetCustomPort(int port)
+{
+    m_nCustomPort = port;
+}
+
 #pragma warning(disable : 4996)
 
 DWORD EvoAPI::GetDefaultAccessType()
@@ -356,7 +361,7 @@ static std::wstring s2ws(std::string s)
 
 bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUser, const std::wstring& wsPassword, ValidateMFAResponse& response)
 {
-    char szBuf[2024];
+    char szBuf[1024];
     wsprintfA(szBuf, "{ \"mfa_code\" : \"%S\", \"environment_url\" : \"%S\", \"user\" : \"%S\", \"password\" : \"%S\", \"domain\" : \"%S\"}",
         wsMFACode.c_str(), m_strEnvironmentUrl.c_str(), wsUser.c_str(), wsPassword.c_str(), GetDomainOrMachineIncludingRegistry().c_str());
 
@@ -425,11 +430,6 @@ bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
     return bRet;
 }
 
-void EvoAPI::SetCustomPort(int port)
-{
-    m_nCustomPort = port;
-}
-
 
 std::wstring GetDomainOrMachineIncludingRegistry()
 {
@@ -488,30 +488,102 @@ std::wstring GetDomainOrMachineIncludingRegistry()
 }
 
 
-void TestJson()
+
+bool EvoAPI::ValidateMFA90(const std::wstring& wsMFACode, const std::wstring& wsUser, ValidateMFA90Response& response)
 {
-    using namespace nlohmann;
-    std::string s{ "{\"user\":\"evo.testing@evosecurity.com\",\"password\":\"Testing123!\",\"environment_url\":\"https://www.evosecurity.io\", \"whatevs\":1234}" };
+    char szBuf[1024];
+    wsprintfA(szBuf, "{ \"mfa_code\" : \"%S\", \"environment_url\" : \"%S\", \"user\" : \"%S\", \"desktop_mfa\" : \"true\", \"domain\" : \"%S\"}",
+        wsMFACode.c_str(), m_strEnvironmentUrl.c_str(), wsUser.c_str(), GetDomainOrMachineIncludingRegistry().c_str());
 
-    try
-    {
-        auto j = json::parse(s);
+    auto evoApiResponse = Connect(L"validate_mfa", szBuf);
+    response.assign(evoApiResponse);
 
-        string user = j["user"];
-        string pw = j["password"];
-        long whatevs = j["whatevs"];
+    if (evoApiResponse.dwStatus != HTTP_STATUS_OK)
+        return false;
+
+
+    auto j = tryParse(evoApiResponse.sResponse);
+    if (j == nullptr)
+        return false;
+
+    bool bRet = false;
+    try {
+        bool bSuccess = j["success"];
+        if (!bSuccess)
+            return false;
+
+        // there's an "offline_code" ... but what do do about it?
+
+        bRet = true;
+    }
+    catch (...) {
 
     }
-    catch (const json::parse_error& err) // for parser
-    {
-        cout << err.what() << endl;
-    }
-    catch (const json::exception& e) // for [] operator ...
-    {
-        cout << e.what() << endl;
-    }
-    catch (const std::exception& e)
-    {
-        cout << e.what();
-    }
+
+    return bRet;
 }
+
+bool EvoAPI::Authenticate90(const std::wstring& wsUser, AuthenticateResponse& response)
+{
+    char szBuf[2024];
+    wsprintfA(szBuf, "{\"environment_url\":\"%S\",\"user\":\"%S\",\"domain\":\"%S\"}",
+        m_strEnvironmentUrl.c_str(), wsUser.c_str(),  GetDomainOrMachineIncludingRegistry().c_str());
+
+    auto evoApiResponse = Connect(L"send_push", szBuf);
+    response.assign(evoApiResponse);
+
+    if (evoApiResponse.dwStatus != HTTP_STATUS_OK)
+        return false;
+
+
+    auto j = tryParse(evoApiResponse.sResponse);
+    if (j == nullptr)
+        return false;
+
+    bool bRet = false;
+    try {
+        response.bMFAEnabled = j["mfa_enabled"];
+        response.request_id = j["request_id"];
+
+        if (!response.bMFAEnabled)
+            return false;
+
+        bRet = true;
+    }
+    catch (...) {
+
+    }
+
+    return bRet;
+}
+
+bool EvoAPI::CheckLoginRequest(std::string request_id)
+{
+    WCHAR szBuf[1024];
+    SecureZeroMemory(szBuf, sizeof(szBuf));
+    wsprintf(szBuf, _T("check_login_request?request_id=%S"), request_id.c_str());
+
+    auto connectResponse = Connect(szBuf, "", L"GET");
+    if (connectResponse.dwStatus != HTTP_STATUS_OK)
+        return false;
+
+    auto j = tryParse(connectResponse.sResponse);
+    if (j == nullptr)
+        return false;
+
+    bool bRet = false;
+    try {
+        bool bSuccess = j["success"];
+        if (!bSuccess)
+            return false;
+
+        int offline_code = j["offline_code"];
+        bRet = true;
+    }
+    catch (...) {
+
+    }
+
+    return bRet;
+}
+

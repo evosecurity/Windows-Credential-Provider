@@ -78,6 +78,13 @@ public:
 	void PushEvoAuthenticationCallback(bool success);
 protected:
 
+	HRESULT Connect10(IQueryContinueWithStatus* pqcws);
+	HRESULT GetSerialization10(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
+
+	HRESULT Connect90(IQueryContinueWithStatus* pqcws);
+	HRESULT GetSerialization90(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
+
+
 	bool IsAccountExcluded();
 
 
@@ -101,5 +108,6 @@ protected:
 	HRESULT _piStatus = E_FAIL;
 
 	EvoSolution _privacyIDEA;
+	bool Is10Pct() const { return m_config->m_bTenPercent; }
 };
 

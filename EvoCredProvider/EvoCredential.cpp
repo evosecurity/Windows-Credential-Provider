@@ -581,7 +581,23 @@ void DebugPayloadCreds(const SecureWString& user, const SecureWString& pw, const
 #endif
 }
 
+
 HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
+{
+	return Is10Pct() ? Connect10(pqcws) : Connect90(pqcws);
+}
+
+HRESULT CEvoCredential::GetSerialization(
+	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
+	__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
+	__deref_out_opt PWSTR* ppwszOptionalStatusText,
+	__out CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon)
+{
+	return Is10Pct() ? GetSerialization10(pcpgsr, pcpcs, ppwszOptionalStatusText, pcpsiOptionalStatusIcon) :
+		GetSerialization90(pcpgsr, pcpcs, ppwszOptionalStatusText, pcpsiOptionalStatusIcon);
+}
+
+HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 {
 	DebugPrint(__FUNCTION__);
 	UNREFERENCED_PARAMETER(pqcws);
@@ -688,7 +704,7 @@ HRESULT CEvoCredential::Connect(IQueryContinueWithStatus* pqcws)
 	return S_OK;
 }
 
-HRESULT CEvoCredential::GetSerialization(
+HRESULT CEvoCredential::GetSerialization10(
 	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
 	__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
 	__deref_out_opt PWSTR* ppwszOptionalStatusText,
@@ -879,6 +895,269 @@ HRESULT CEvoCredential::GetSerialization(
 #endif //_DEBUG
 	return retVal;
 }
+
+HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
+{
+	DebugPrint(__FUNCTION__);
+	UNREFERENCED_PARAMETER(pqcws);
+
+	m_config->provider.pCredProvCredential = this;
+	m_config->provider.pCredProvCredentialEvents = m_pCredProvCredentialEvents;
+	m_config->provider.field_strings = _rgFieldStrings;
+	_util.ReadFieldValues();
+
+
+	// Check if the user is the excluded account
+	if (IsAccountExcluded())
+		return S_OK;
+
+	//  way we're using it is different
+	if (m_config->bypassPrivacyIDEA)
+	{
+		DebugPrint("Bypassing privacyIDEA...");
+
+		return S_OK;
+	}
+
+	if (m_config->twoStepHideOTP && !m_config->isSecondStep) {
+		// is first step
+		DebugPrint("Connect First step");
+		DebugPrint(L"Base Url: " + m_config->baseUrl);
+		DebugPrint(L"Environment url: " + m_config->environmentUrl);
+
+		EvoAPI::AuthenticateResponse response;
+		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
+		bool bSuccess = evoApi.Authenticate90(m_config->credential.username, response);
+		if (bSuccess)
+		{
+			DebugPrint(L"Start poll");
+			_privacyIDEA.asyncEvoPoll(response.request_id, m_config, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
+		}
+		else
+		{
+			ReleaseDebugPrint(L"No poll. Failed Authenticate. Http: " + std::to_wstring(response.httpStatus));
+			ReleaseDebugPrint(L"Tried with username: " + m_config->credential.username);
+			if (!response.raw_response.empty()) ReleaseDebugPrint("Authenticate response:" + response.raw_response);
+			_piStatus = EVOSOL_SERVER_PREPOLL_FAILED;
+			return S_OK;
+		}
+
+	}
+	else if (m_config->twoStepHideOTP && m_config->isSecondStep) {
+		// is second step
+		DebugPrint("Connect Second step");
+
+		EvoAPI::ValidateMFA90Response response;
+		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
+		if (evoApi.ValidateMFA90(m_config->credential.otp, m_config->credential.username, response))
+		{
+			_piStatus = EVOSOL_AUTH_SUCCESS;
+		}
+		else
+		{
+			_piStatus = EVOSOL_AUTH_FAILURE;
+		}
+	}
+
+	DebugPrint(string("END ") + __FUNCTION__ );
+	return S_OK;
+}
+
+HRESULT CEvoCredential::GetSerialization90(
+	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
+	__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
+	__deref_out_opt PWSTR* ppwszOptionalStatusText,
+	__out CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon
+)
+{
+	DebugPrint(__FUNCTION__);
+
+	*pcpgsr = CPGSR_RETURN_NO_CREDENTIAL_FINISHED;
+
+	HRESULT hr = E_FAIL, retVal = S_OK;
+
+	m_config->provider.pCredProvCredentialEvents = m_pCredProvCredentialEvents;
+	m_config->provider.pCredProvCredential = this;
+
+	m_config->provider.pcpcs = pcpcs;
+	m_config->provider.pcpgsr = pcpgsr;
+
+	m_config->provider.status_icon = pcpsiOptionalStatusIcon;
+	m_config->provider.status_text = ppwszOptionalStatusText;
+
+	m_config->provider.field_strings = _rgFieldStrings;
+
+
+	if (m_config->credential.passwordMustChange)
+	{
+		/// TODO: add code
+	}
+	else if (m_config->credential.passwordChanged)
+	{
+		/// TODO: add code
+	}
+	else
+	{
+		if (m_config->userCanceled)
+		{
+			*m_config->provider.status_icon = CPSI_ERROR;
+			*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_FINISHED;
+			SHStrDupW(L"Logon cancelled", m_config->provider.status_text);
+			return S_FALSE;
+		}
+
+		if (_piStatus != EVOSOL_AUTH_SUCCESS && m_config->pushAuthenticationSuccessful == false)
+		{
+			// If we got here, Connect() is not a success yet
+			// set UI for first or second step
+
+			if (m_config->isSecondStep == false && m_config->twoStepHideOTP)
+			{
+				if (_piStatus == EVOSOL_SERVER_PREPOLL_FAILED)
+				{
+					// ok, failed on the original connect ... need to return ...
+					m_config->clearFields = true;
+					ShowErrorMessage(L"Bad Evo credentials.", 0);
+					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_util.ResetScenario(this, m_pCredProvCredentialEvents);
+					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_piStatus = EVOSOL_STATUS_NOT_SET;
+				}
+				else if (_piStatus == EVOSOL_AUTH_FAILURE)
+				{
+					// ok, failed somewhere ... need to return ...
+					m_config->clearFields = true;
+					ShowErrorMessage(L"Failure to authenticate.", 0);
+					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_util.ResetScenario(this, m_pCredProvCredentialEvents);
+					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_piStatus = EVOSOL_STATUS_NOT_SET;
+
+				}
+				else
+				{
+					// Prepare for the second step (input only OTP)
+					m_config->isSecondStep = true;
+					m_config->clearFields = false;
+					_util.SetScenario(m_config->provider.pCredProvCredential, m_config->provider.pCredProvCredentialEvents,
+						SCENARIO::SECOND_STEP);
+					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+				}
+			}
+			else
+			{
+				// Failed authentication or error section
+				// Create a message depending on the error
+				int errorCode = 0;
+				wstring errorMessage;
+				bool isGerman = GetUserDefaultUILanguage() == 1031;
+				bool bRepeatStepTwo = false;
+				if (_piStatus == EVOSOL_AUTH_FAILURE)
+				{
+					errorMessage = m_config->defaultOTPFailureText;
+					if (m_config->m_bTenPercent)
+					{
+						// TODO: check if OTP is empty ... if so, maybe start from beginning...
+						bRepeatStepTwo = true;
+					}
+				}
+				// In this case the error is contained in a valid response from PI
+				else if (_piStatus == EVOSOL_AUTH_ERROR)
+				{
+					errorMessage = _privacyIDEA.getLastErrorMessage();
+					errorCode = _privacyIDEA.getLastError();
+				}
+				else if (_piStatus == EVOSOL_WRONG_OFFLINE_SERVER_UNAVAILABLE)
+				{
+					errorMessage = isGerman ? L"Server nicht erreichbar oder falsches offline OTP!" :
+						L"Server unreachable or wrong offline OTP!";
+				}
+				else if (_piStatus == EVOSOL_ENDPOINT_SERVER_UNAVAILABLE)
+				{
+					errorMessage = isGerman ? L"Server nicht erreichbar!" : L"Server unreachable!";
+				}
+				else if (_piStatus == EVOSOL_ENDPOINT_SETUP_ERROR)
+				{
+					errorMessage = isGerman ? L"Fehler beim Verbindungsaufbau!" : L"Error while setting up the connection!";
+				}
+				ShowErrorMessage(errorMessage, errorCode);
+				if (!bRepeatStepTwo)
+				{
+					_util.ResetScenario(this, m_pCredProvCredentialEvents);
+				}
+				else
+				{
+					// nothing or something?
+					DebugPrint(L"Repeating step two, clear = " + std::to_wstring(m_config->clearFields));
+				}
+				*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+			}
+		}
+		else if (_piStatus == EVOSOL_AUTH_SUCCESS || m_config->pushAuthenticationSuccessful)
+		{
+			// ok, somehow EVO succeeded 
+
+			// Reset the authentication
+			_piStatus = EVOSOL_STATUS_NOT_SET;
+			m_config->pushAuthenticationSuccessful = false;
+			//_privacyIDEA.stopPoll();
+
+			// Pack credentials for logon
+			if (m_config->provider.cpu == CPUS_CREDUI)
+			{
+				DebugPrint("Doing CredPackAuthentication()");
+				hr = _util.CredPackAuthentication(pcpgsr, pcpcs, m_config->provider.cpu,
+					m_config->credential.username.c_str(), m_config->credential.password, m_config->credential.domain.c_str());
+			}
+			else
+			{
+				DebugPrint("Doing KerberosLogin()");
+				hr = _util.KerberosLogon(pcpgsr, pcpcs, m_config->provider.cpu,
+					m_config->credential.username.c_str(), m_config->credential.password, m_config->credential.domain.c_str());
+			}
+
+			if (!SUCCEEDED(hr))
+				retVal = S_FALSE;
+		}
+		else
+		{
+			// privacyIDEA had this block, but IDK how it can actually get to here
+			ShowErrorMessage(L"Unexpected error", 0);
+
+			// Jump to the first login window
+			_util.ResetScenario(this, m_pCredProvCredentialEvents);
+			retVal = S_FALSE;
+		}
+	}
+
+	/// TODO: not sure about this... why it's necessary ... etc...
+	if (m_config->clearFields)
+	{
+		_util.Clear(_rgFieldStrings, _rgCredProvFieldDescriptors, this, m_pCredProvCredentialEvents, CLEAR_FIELDS_CRYPT);
+	}
+	else
+	{
+		m_config->clearFields = true; // it's a one-timer...
+	}
+
+
+#ifdef _DEBUG
+	if (pcpgsr)
+	{
+		if (*pcpgsr == CPGSR_NO_CREDENTIAL_FINISHED) { DebugPrint("CPGSR_NO_CREDENTIAL_FINISHED"); }
+		if (*pcpgsr == CPGSR_NO_CREDENTIAL_NOT_FINISHED) { DebugPrint("CPGSR_NO_CREDENTIAL_NOT_FINISHED"); }
+		if (*pcpgsr == CPGSR_RETURN_CREDENTIAL_FINISHED) { DebugPrint("CPGSR_RETURN_CREDENTIAL_FINISHED"); }
+		if (*pcpgsr == CPGSR_RETURN_NO_CREDENTIAL_FINISHED) { DebugPrint("CPGSR_RETURN_NO_CREDENTIAL_FINISHED"); }
+	}
+	else { DebugPrint("pcpgsr is a nullpointer!"); }
+	DebugPrint("CEvoCredential::GetSerialization - END");
+#endif //_DEBUG
+	return retVal;
+}
+
+
+
+
 
 void CEvoCredential::PushEvoAuthenticationCallback(bool success)
 {

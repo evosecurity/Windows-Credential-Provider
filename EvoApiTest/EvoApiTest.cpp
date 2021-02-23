@@ -102,6 +102,140 @@ void TheFuncExtToLog(LPCSTR message, LPCSTR filename, int lineno, bool flag)
     cout << "[" << filename << ":" << lineno << "] " << message << endl;
 }
 
+void TestMFA10()
+{
+    cout << "Testing validate_mfa" << endl;
+    EvoAPI::ValidateMFAResponse validateMfaResponse;
+    bool bValidateMFA = ValidateMFA(validateMfaResponse);
+    WriteBasicResponse(validateMfaResponse);
+    if (bValidateMFA) {
+        cout << "validate_mfa succeeded" << endl;
+
+        secure_string user, pw;
+        if (GetCredsFromPayload(validateMfaResponse, user, pw))
+        {
+            cout << "user: " << user << endl << "pw:   " << pw << endl;
+        }
+        else
+        {
+            cout << "failed getting payload creds" << endl;
+        }
+    }
+    else {
+        cout << "validate_mfa failed" << endl;
+    }
+}
+
+
+void TestPoll10()
+{
+    EvoAPI::AuthenticateResponse authenticateResponse;
+    bool bAuth = Authenticate(authenticateResponse);
+    WriteBasicResponse(authenticateResponse);
+    if (bAuth && !authenticateResponse.request_id.empty())
+    {
+        cout << "Authenticating: " << authenticateResponse.request_id << endl;
+
+        bool LoginGood = false;
+        EvoAPI::CheckLoginResponse checkLoginResponse;
+        for (int i = 0; i < 10; ++i)
+        {
+            Sleep(1000);
+            cout << "Checking ...  " << endl;
+            LoginGood = CheckLogin(authenticateResponse.request_id, checkLoginResponse);
+            WriteBasicResponse(checkLoginResponse);
+            if (LoginGood)
+            {
+                cout << "\nChecked ok" << endl;
+                break;
+            }
+            else {
+            }
+        }
+
+        if (LoginGood)
+        {
+            secure_string user, pw;
+            if (GetCredsFromPayload(checkLoginResponse, user, pw))
+            {
+                cout << "user: " << user << endl << "pw:   " << pw << endl;
+            }
+            else
+            {
+                cout << "Failed to get creds" << endl;
+            }
+        }
+    }
+    else {
+        cout << "Authenticate failed ..." << endl;
+        cout << "Http response: " << authenticateResponse.httpStatus << ", message: " << authenticateResponse.raw_response << endl;
+    }
+}
+
+
+void TestMFA90()
+{
+    std::wstring sAuthCode;
+    cout << "Enter auth code:  ";
+    wcin >> sAuthCode;
+
+    EvoAPI EvoApi{};
+    EvoAPI::ValidateMFA90Response response;
+    bool bSuccess = EvoApi.ValidateMFA90(sAuthCode.c_str(), GlobalUserName, response);
+    if (bSuccess) {
+        cout << "validate_mfa succeeded" << endl;
+    }
+    else {
+        cout << "validate_mfa failed" << endl;
+
+    }
+
+}
+
+void TestPoll90()
+{
+    cout << "Testing polling" << endl;
+    
+    EvoAPI::AuthenticateResponse response;
+    EvoAPI evoApi;
+    bool bSuccess = evoApi.Authenticate90(GlobalUserName, response);
+    if (bSuccess) {
+        cout << "Authenticate90 succeeded" << endl;
+    }
+    else {
+        cout << "Authenticate90 failed" << endl;
+        return;
+    }
+
+    cout << "Authenticating: " << response.request_id << endl;
+
+    bool LoginGood = false;
+    for (int i = 0; i < 10; ++i) {
+        Sleep(1000);
+
+        cout << "Checking ...  " << endl;
+
+        EvoAPI evo;
+        LoginGood = evo.CheckLoginRequest(response.request_id);
+        if (LoginGood)
+        {
+            cout << "\nChecked ok" << endl;
+            break;
+        }
+        else {
+        }
+    }
+
+    if (LoginGood) {
+        cout << "Good polling" << endl;
+    }
+    else {
+        cout << "Failed polling" << endl;
+    }
+
+}
+
+
 int _tmain(int argc, wchar_t* argv[])
 {
     std::wstring domainNameBuf = GetDomainOrMachineIncludingRegistry();
@@ -139,70 +273,8 @@ int _tmain(int argc, wchar_t* argv[])
     //EvoAPI::SetCharWidthLog(TheFuncToLog);
     EvoAPI::SetCharWidthExtLogFunc(TheFuncExtToLog);
 
-    {
-        cout << "Testing validate_mfa" << endl;
-        EvoAPI::ValidateMFAResponse validateMfaResponse;
-        bool bValidateMFA = ValidateMFA(validateMfaResponse);
-        WriteBasicResponse(validateMfaResponse);
-        if (bValidateMFA) {
-            cout << "validate_mfa succeeded" << endl;
+    TestMFA90();
 
-            secure_string user, pw;
-            if (GetCredsFromPayload(validateMfaResponse, user, pw))
-            {
-                cout << "user: " << user << endl << "pw:   " << pw << endl;
-            }
-            else
-            {
-                cout << "failed getting payload creds" << endl;
-            }
-        }
-        else {
-            cout << "validate_mfa failed" << endl;
-        }
-    }
+    TestPoll90();
 
-    {
-        EvoAPI::AuthenticateResponse authenticateResponse;
-        bool bAuth = Authenticate(authenticateResponse);
-        WriteBasicResponse(authenticateResponse);
-        if (bAuth && !authenticateResponse.request_id.empty())
-        {
-            cout << "Authenticating: " << authenticateResponse.request_id << endl;
-
-            bool LoginGood = false;
-            EvoAPI::CheckLoginResponse checkLoginResponse;
-            for (int i = 0; i < 10; ++i)
-            {
-                Sleep(1000);
-                cout << "Checking ...  " << endl;
-                LoginGood = CheckLogin(authenticateResponse.request_id, checkLoginResponse);
-                WriteBasicResponse(checkLoginResponse);
-                if (LoginGood)
-                {
-                    cout << "\nChecked ok" << endl;
-                    break;
-                }
-                else {
-                }
-            }
-
-            if (LoginGood)
-            {
-                secure_string user, pw;
-                if (GetCredsFromPayload(checkLoginResponse, user, pw))
-                {
-                    cout << "user: " << user << endl << "pw:   " << pw << endl;
-                }
-                else
-                {
-                    cout << "Failed to get creds" << endl;
-                }
-            }
-        }
-        else {
-            cout << "Authenticate failed ..." << endl;
-            cout << "Http response: " << authenticateResponse.httpStatus << ", message: " << authenticateResponse.raw_response << endl;
-        }
-    }
 }

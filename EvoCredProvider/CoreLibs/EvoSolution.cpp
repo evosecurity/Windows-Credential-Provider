@@ -2,6 +2,7 @@
 #include "EvoSecureString.h"
 #include "EvoSolution.h"
 #include "../EvoApi/EvoApi.h"
+#include "../Configuration.h"
 #include <codecvt>
 #include <thread>
 #include "Logger.h"
@@ -92,6 +93,40 @@ void EvoSolution::pollEvoThread(const std::string& transaction_id, std::wstring 
 
 	DebugPrint("Ending pollEvoThread()");
 }
+
+void EvoSolution::asyncEvoPoll(std::string transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback)
+{
+	_runPoll.store(true);
+	std::thread t(&EvoSolution::pollEvoThread2, this, transaction_id, p, callback);
+	t.detach();
+}
+
+void EvoSolution::pollEvoThread2(const std::string& transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback)
+{
+	DebugPrint(__FUNCTION__);
+	this_thread::sleep_for(chrono::milliseconds(100));
+
+	bool success = false;
+	while (_runPoll.load())
+	{
+		EvoAPI evoapi(p->baseUrl, p->environmentUrl);
+		if (evoapi.CheckLoginRequest(transaction_id))
+		{
+			_runPoll.store(false);
+			success = true;
+			break;
+		}
+		this_thread::sleep_for(chrono::milliseconds(500));
+	}
+
+	if (success)
+	{
+		callback(true);
+	}
+
+	DebugPrint(std::string("Exiting ") + __FUNCTION__);
+}
+
 
 int EvoSolution::getLastError()
 {

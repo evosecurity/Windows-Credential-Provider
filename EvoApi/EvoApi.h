@@ -74,9 +74,17 @@ public:
     {
     };
 
+    struct ValidateMFA90Response : BasicResponse
+    {};
+
     bool Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, AuthenticateResponse& authResponse );
     bool ValidateMFA(const std::wstring& wsMFACode, const std::wstring&  wsUser, const std::wstring& wsPassword, ValidateMFAResponse& validateResponse);
     bool CheckLoginRequest(LPCSTR pszCode, CheckLoginResponse& clResponse);
+
+
+    bool ValidateMFA90(const std::wstring& wsMFACode, const std::wstring& wsUser, ValidateMFA90Response& response);
+    bool Authenticate90(const std::wstring& wsUser, AuthenticateResponse& response);
+    bool CheckLoginRequest(const std::string request_id);
 
 
     void SetCustomPort(int port);
