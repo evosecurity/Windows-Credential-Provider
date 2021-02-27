@@ -559,7 +559,7 @@ HRESULT Utilities::InitializeField(
 		}
 		else
 		{
-			hr = SHStrDupW(L"EvoSecurity Login", &rgFieldStrings[field_index]);
+			hr = SHStrDupW(L"Evo Security Login", &rgFieldStrings[field_index]);
 		}
 		LoggerPrint(L"Setting large text: " + wstring(rgFieldStrings[field_index]));
 		break;

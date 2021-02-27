@@ -519,6 +519,8 @@ bool CEvoCredential::IsAccountExcluded()
 			toCompare.append(m_config->credential.domain).append(L"\\");
 		}
 		toCompare.append(m_config->credential.username);
+		DebugPrint(L"toCompare: " + toCompare);
+		DebugPrint(L"excluded_account: " + m_config->excludedAccount);
 		if (EvoSolution::toUpperCase(toCompare) == EvoSolution::toUpperCase(m_config->excludedAccount)) {
 			DebugPrint("Login data matches excluded account, skipping 2FA...");
 			// Simulate 2FA success so the logic in GetSerialization can stay the same
@@ -1102,18 +1104,20 @@ HRESULT CEvoCredential::GetSerialization90(
 			m_config->pushAuthenticationSuccessful = false;
 			//_privacyIDEA.stopPoll();
 
+			std::wstring domainToUse = m_config->credential.domain; // GetDomainOrMachineIncludingRegistry(); 
+
 			// Pack credentials for logon
 			if (m_config->provider.cpu == CPUS_CREDUI)
 			{
 				DebugPrint("Doing CredPackAuthentication()");
 				hr = _util.CredPackAuthentication(pcpgsr, pcpcs, m_config->provider.cpu,
-					m_config->credential.username.c_str(), m_config->credential.password, m_config->credential.domain.c_str());
+					m_config->credential.username, m_config->credential.password, domainToUse);
 			}
 			else
 			{
 				DebugPrint("Doing KerberosLogin()");
 				hr = _util.KerberosLogon(pcpgsr, pcpcs, m_config->provider.cpu,
-					m_config->credential.username.c_str(), m_config->credential.password, m_config->credential.domain.c_str());
+					m_config->credential.username, m_config->credential.password, domainToUse);
 			}
 
 			if (!SUCCEEDED(hr))
@@ -1154,10 +1158,6 @@ HRESULT CEvoCredential::GetSerialization90(
 #endif //_DEBUG
 	return retVal;
 }
-
-
-
-
 
 void CEvoCredential::PushEvoAuthenticationCallback(bool success)
 {

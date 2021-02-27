@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Fragment>
+		<UI>
+			<!-- PAGE 1-->
+			<TextStyle Id="Tahoma_Bold" FaceName="Tahoma" Size="8" Bold="yes"/>
+			<Dialog Id="ServerConfigurationDlg" Width="370" Height="270" Title="[ProductName] Setup" NoMinimize="yes">
+
+				<Control Id="HttpsLabel" Type="Text" X="45" Y="58" Width="220" Height="15" TabSkip="no" Text="https://" />
+				<Control Id="HostnameEdit" Type="Edit" X="75" Y="55" Width="115" Height="18" Property="HOSTNAME" />
+				<Control Id="PathEdit" Type="Edit" X="195" Y="55" Width="140" Height="18" Property="PATH" />
+
+				<Control Id="EnvironmentUrlLabel" Type="Text" X="45" Y="80" Width="65" Height="15" TabSkip="no" Text="Environment URL:" />
+				<Control Id="EnvironmentUrl" Type="Edit" X="115" Y="80" Width="220" Height="18" Property="ENVIRONMENTURL"/>
+
+				<Control Id="DomainLabel" Type="Text" X="45" Y="100" Width="40" Height="15" TabSkip="no" Text="Domain:" />
+				<Control Id="Domain" Type="Edit" X="80" Y="100" Width="255" Height="18" Property="DOMAIN"/>
+
+				<Control Id="ExcludedAccountLabel" Type="Text" X="45" Y="120" Width="85" Height="15" TabSkip="no" Text="Excluded account:" />
+				<Control Id="ExcludedAccountEdit" Type="Edit" X="120" Y="120" Width="215" Height="18" Property="EXCLUDEDUSER" />
+
+				<Control Id="ReleaseVersionLog" Type="CheckBox" X="45" Y="190" Width="220" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create Logfile in production use." />
+
+
+				<Control Id="ChangeSettingsLabel" Type="Text" X="45" Y="222" Width="220" Height="15" TabSkip="no" Text="{\Tahoma_Bold} These settings can be changed in the registry." />
+
+				<!-- Bottom Controls -->
+				<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
+					<Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>
+				</Control>
+				<Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
+					<!--<Publish Event="NewDialog" Value="UserConfigurationDlg">HOSTNAME</Publish>-->
+					<Publish Event="NewDialog" Value="VerifyReadyDlg">HOSTNAME</Publish>
+					<Publish Event="SpawnDialog" Value="NoServerURLMessageDlg">HOSTNAME="hostname"</Publish>
+
+					<!-- These were in the UserConfigurationDlg that was removed-->
+					<!-- Re-populate the configuration to the registry -->
+					<Publish Event="ReinstallMode" Value="m" Order="1">Installed</Publish>
+					<Publish Event="Reinstall" Value="MainInstall" Order="2">Installed</Publish>
+				</Control>
+
+				<Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
+					<Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+				</Control>
+
+				<Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
+				<Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes">
+					<Text>Setup hostname, path and properties.</Text>
+				</Control>
+				<Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+				<Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes">
+					<Text>{\WixUI_Font_Title}Configuration</Text>
+				</Control>
+				<Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+
+			</Dialog>
+		</UI>
+	</Fragment>
+
+	<Fragment>
+		<UI>
+			<Dialog Id="UserConfigurationDlg" Width="370" Height="270" Title="[ProductName] Setup" NoMinimize="yes">
+
+				<Control Id="UserConfigurationInfo" Type="Text" X="45" Y="43" Width="300" Height="45" TabSkip="no" Text="!(loc.UserConfigurationInfo)" />
+
+				<Control Id="V1BitmapPathLabel" Type="Text" X="45" Y="88" Width="220" Height="15" TabSkip="no" Text="&amp;Login Tile Image (*.bmp - 128px X 128px): (optional)" />
+				<Control Id="V1BitmapPathEdit" Type="Edit" X="45" Y="100" Width="220" Height="18" Property="V1_BITMAP_PATH" Text="{1024}" />
+				<Control Id="V1BitmapPathInfo" Type="PushButton" X="270" Y="99" Width="18" Height="18" FixedSize="yes" IconSize="16" Text="HelpIcon" Icon="yes">
+					<Publish Event="SpawnDialog" Value="V1BitmapPathInfoDlg">1</Publish>
+				</Control>
+
+				<Control Id="LoginTextLabel" Type="Text" X="45" Y="120" Width="220" Height="15" TabSkip="no" Text="&amp;Login Text: (optional)" />
+				<Control Id="LoginTextEdit" Type="Edit" X="45" Y="132" Width="220" Height="18" Property="LOGIN_TEXT" Text="{64}" />
+				<Control Id="LoginTextInfo" Type="PushButton" X="270" Y="131" Width="18" Height="18" FixedSize="yes" IconSize="16" Text="HelpIcon" Icon="yes">
+					<Publish Event="SpawnDialog" Value="LoginTextInfoDlg">1</Publish>
+				</Control>
+
+				<Control Id="OTPTextLabel" Type="Text" X="45" Y="152" Width="220" Height="15" TabSkip="no" Text="&amp;OTP Field Text: (optional)" />
+				<Control Id="OTPTextEdit" Type="Edit" X="45" Y="164" Width="220" Height="18" Property="OTP_TEXT" Text="{64}" />
+
+				<!--<Control Id="ReleaseVersionLog" Type="CheckBox" X="45" Y="185" Width="220" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create Logfile in productive use." />-->
+
+				<!-- Bottom Controls -->
+				<Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
+					<Publish Event="NewDialog" Value="ServerConfigurationDlg">1</Publish>
+				</Control>
+				<Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
+					<Publish Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+
+					<!-- Re-populate the configuration to the registry -->
+					<Publish Event="ReinstallMode" Value="m" Order="1">Installed</Publish>
+					<Publish Event="Reinstall" Value="MainInstall" Order="2">Installed</Publish>
+				</Control>
+
+				<Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
+					<Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+				</Control>
+
+				<Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
+				<Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes">
+					<Text>Customize the login.</Text>
+				</Control>
+				<Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+				<Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes">
+					<Text>{\WixUI_Font_Title}Configuration 2/2</Text>
+				</Control>
+				<Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+
+			</Dialog>
+		</UI>
+	</Fragment>
+
+	<Fragment>
+		<UI>
+			<Dialog Id="NoServerURLMessageDlg" Width="260" Height="85" Title="[ProductName] Setup" NoMinimize="yes">
+				<Control Id="Icon" Type="Icon" X="15" Y="15" Width="24" Height="24"
+				  ToolTip="Information icon" FixedSize="yes" IconSize="32" Text="ExclamIcon" />
+				<Control Id="Return" Type="PushButton" X="100" Y="57" Width="56" Height="17" Default="yes" Cancel="yes" Text="&amp;Return">
+					<Publish Event="EndDialog" Value="Return">1</Publish>
+				</Control>
+				<Control Id="Text" Type="Text" X="48" Y="15" Width="194" Height="30" TabSkip="no">
+					<Text>
+						Please specify at least a hostname!
+						The path is optional.
+					</Text>
+				</Control>
+			</Dialog>
+		</UI>
+
+		<UI>
+			<Dialog Id="ServerUrlInfoDlg" Width="500" Height="100" Title="[ProductName] Setup" NoMinimize="yes" >
+				<Control Id="Icon" Type="Icon" X="15" Y="15" Width="24" Height="24"
+				  ToolTip="Information icon" FixedSize="yes" IconSize="32" Text="InfoIcon" />
+				<Control Id="Return" Type="PushButton" X="340" Y="80" Width="56" Height="17" Default="yes" Cancel="yes" Text="&amp;Return">
+					<Publish Event="EndDialog" Value="Return">1</Publish>
+				</Control>
+				<Control Id="Text1" Type="Text" X="48" Y="0" Width="482" Height="75" TabSkip="no" NoPrefix="yes" NoWrap="no">
+					<Text>
+						!(loc.ServerUrlInfo)
+					</Text>
+				</Control>
+			</Dialog>
+		</UI>
+
+		<UI>
+			<Dialog Id="LoginTextInfoDlg" Width="500" Height="100" Title="[ProductName] Setup" NoMinimize="yes" >
+				<Control Id="Icon" Type="Icon" X="15" Y="15" Width="24" Height="24"
+				  ToolTip="Information icon" FixedSize="yes" IconSize="32" Text="InfoIcon" />
+				<Control Id="Return" Type="PushButton" X="340" Y="80" Width="56" Height="17" Default="yes" Cancel="yes" Text="&amp;Return">
+					<Publish Event="EndDialog" Value="Return">1</Publish>
+				</Control>
+				<Control Id="Text1" Type="Text" X="48" Y="0" Width="482" Height="75" TabSkip="no" NoPrefix="yes" NoWrap="no">
+					<Text>
+						!(loc.LoginTextInfo)
+					</Text>
+				</Control>
+			</Dialog>
+		</UI>
+
+		<UI>
+			<Dialog Id="V1BitmapPathInfoDlg" Width="500" Height="150" Title="[ProductName] Setup" NoMinimize="yes" >
+				<Control Id="Icon" Type="Icon" X="15" Y="15" Width="24" Height="24"
+				  ToolTip="Information icon" FixedSize="yes" IconSize="32" Text="InfoIcon" />
+				<Control Id="Return" Type="PushButton" X="340" Y="130" Width="56" Height="17" Default="yes" Cancel="yes" Text="&amp;Return">
+					<Publish Event="EndDialog" Value="Return">1</Publish>
+				</Control>
+				<Control Id="Text1" Type="Text" X="48" Y="0" Width="482" Height="125" TabSkip="no" NoPrefix="yes" NoWrap="no">
+					<Text>
+						!(loc.V1BitmapPathInfo)
+					</Text>
+				</Control>
+			</Dialog>
+		</UI>
+	</Fragment>
+</Wix>

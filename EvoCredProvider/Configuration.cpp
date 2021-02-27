@@ -82,7 +82,8 @@ Configuration::Configuration()
 	CEvoRegKey rkey(registryPath);
 
 	rkey.Get(L"v1_bitmap_path", bitmapPath);
-	rkey.Get(L"hide_domainname", hideDomainName);
+	//rkey.Get(L"hide_domainname", hideDomainName);
+	hideDomainName = true;
 	rkey.Get(L"hide_fullname", hideFullName);
 	rkey.Get(L"hide_otp_sleep_s", hide_otp_sleep_s);
 
@@ -100,7 +101,7 @@ Configuration::Configuration()
 	// Custom field texts: check if set, otherwise use defaults (from header)
 	wstring tmp;
 	rkey.Get(L"login_text", tmp);
-	loginText = tmp.empty() ? L"EvoSecurity Login" : tmp;
+	loginText = tmp.empty() ? L"Evo Security Login" : tmp;
 
 	rkey.Get(L"otp_text", otpFieldText);
 
