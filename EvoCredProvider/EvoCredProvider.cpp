@@ -7,6 +7,7 @@
 #include "EvoCredProvider_i.h"
 #include "dllmain.h"
 #include "xdlldata.h"
+#include "EvoCredProvider_i.c"
 
 
 using namespace ATL;

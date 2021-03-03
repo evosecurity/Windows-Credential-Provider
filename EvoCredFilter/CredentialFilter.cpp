@@ -5,7 +5,7 @@
 #include "../EvoCommon/Logger.h"
 #include "../EvoCommon/Shared.h"
 
-#import "EvoCredProvider.dll" exclude("_userHBITMAP", "__MIDL_IWinTypes_0007", "_userBITMAP", "wireHWND", "_RemotableHandle", "__MIDL_IWinTypes_0009")
+#import "EvoCredProvider.tlb" exclude("_userHBITMAP", "__MIDL_IWinTypes_0007", "_userBITMAP", "wireHWND", "_RemotableHandle", "__MIDL_IWinTypes_0009")
 
 
 HRESULT CCredentialFilter::Filter(CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, DWORD dwFlags, GUID* rgclsidProviders,

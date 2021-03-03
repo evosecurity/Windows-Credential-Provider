@@ -298,8 +298,8 @@
     <ProjectReference Include="..\EvoCommon\EvoCommon.vcxproj">
       <Project>{f8d46830-b34a-42aa-a7e7-ebc1bd04a3b5}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\EvoCredProvider\EvoCredProvider.vcxproj">
-      <Project>{6a19c1dd-7fec-4707-a564-4d9258c46949}</Project>
+    <ProjectReference Include="..\IDLCommon\IDLCommon.vcxproj">
+      <Project>{c6c881fb-af65-4f62-9bfb-36eb040f93f5}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -94,14 +94,14 @@ void EvoSolution::pollEvoThread(const std::string& transaction_id, std::wstring 
 	DebugPrint("Ending pollEvoThread()");
 }
 
-void EvoSolution::asyncEvoPoll(std::string transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback)
+void EvoSolution::asyncEvoPoll90(std::string transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback)
 {
 	_runPoll.store(true);
-	std::thread t(&EvoSolution::pollEvoThread2, this, transaction_id, p, callback);
+	std::thread t(&EvoSolution::pollEvoThread90, this, transaction_id, p, callback);
 	t.detach();
 }
 
-void EvoSolution::pollEvoThread2(const std::string& transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback)
+void EvoSolution::pollEvoThread90(const std::string& transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback)
 {
 	DebugPrint(__FUNCTION__);
 	this_thread::sleep_for(chrono::milliseconds(100));

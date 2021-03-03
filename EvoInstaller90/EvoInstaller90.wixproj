@@ -61,9 +61,9 @@
       <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
       <RefTargetDir>INSTALLFOLDER</RefTargetDir>
     </ProjectReference>
-    <ProjectReference Include="..\EvoCredProvider\EvoCredProvider.vcxproj">
-      <Name>EvoCredProvider</Name>
-      <Project>{6a19c1dd-7fec-4707-a564-4d9258c46949}</Project>
+    <ProjectReference Include="..\EvoCredProvider\EvoCredProvider90.vcxproj">
+      <Name>EvoCredProvider90</Name>
+      <Project>{2ab320b7-5792-4253-bbab-ff49ecafd45a}</Project>
       <Private>True</Private>
       <DoNotHarvest>True</DoNotHarvest>
       <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>

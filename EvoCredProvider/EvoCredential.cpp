@@ -921,7 +921,7 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		return S_OK;
 	}
 
-	if (m_config->twoStepHideOTP && !m_config->isSecondStep) {
+	if (m_config->IsFirstStep()) {
 		// is first step
 		DebugPrint("Connect First step");
 		DebugPrint(L"Base Url: " + m_config->baseUrl);
@@ -933,7 +933,7 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		if (bSuccess)
 		{
 			DebugPrint(L"Start poll");
-			_privacyIDEA.asyncEvoPoll(response.request_id, m_config, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
+			_privacyIDEA.asyncEvoPoll90(response.request_id, m_config, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
 		}
 		else
 		{
@@ -945,7 +945,7 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		}
 
 	}
-	else if (m_config->twoStepHideOTP && m_config->isSecondStep) {
+	else if (m_config->IsSecondStep()) {
 		// is second step
 		DebugPrint("Connect Second step");
 
@@ -958,6 +958,8 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		else
 		{
 			_piStatus = EVOSOL_AUTH_FAILURE;
+			//_privacyIDEA.stopPoll();
+			
 		}
 	}
 
@@ -1013,7 +1015,7 @@ HRESULT CEvoCredential::GetSerialization90(
 			// If we got here, Connect() is not a success yet
 			// set UI for first or second step
 
-			if (m_config->isSecondStep == false && m_config->twoStepHideOTP)
+			if (m_config->IsFirstStep())
 			{
 				if (_piStatus == EVOSOL_SERVER_PREPOLL_FAILED)
 				{
@@ -1034,7 +1036,6 @@ HRESULT CEvoCredential::GetSerialization90(
 					_util.ResetScenario(this, m_pCredProvCredentialEvents);
 					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
 					_piStatus = EVOSOL_STATUS_NOT_SET;
-
 				}
 				else
 				{
@@ -1048,20 +1049,14 @@ HRESULT CEvoCredential::GetSerialization90(
 			}
 			else
 			{
-				// Failed authentication or error section
-				// Create a message depending on the error
+				// failed in second step ....
+
 				int errorCode = 0;
 				wstring errorMessage;
-				bool isGerman = GetUserDefaultUILanguage() == 1031;
 				bool bRepeatStepTwo = false;
 				if (_piStatus == EVOSOL_AUTH_FAILURE)
 				{
 					errorMessage = m_config->defaultOTPFailureText;
-					if (m_config->m_bTenPercent)
-					{
-						// TODO: check if OTP is empty ... if so, maybe start from beginning...
-						bRepeatStepTwo = true;
-					}
 				}
 				// In this case the error is contained in a valid response from PI
 				else if (_piStatus == EVOSOL_AUTH_ERROR)
@@ -1069,30 +1064,12 @@ HRESULT CEvoCredential::GetSerialization90(
 					errorMessage = _privacyIDEA.getLastErrorMessage();
 					errorCode = _privacyIDEA.getLastError();
 				}
-				else if (_piStatus == EVOSOL_WRONG_OFFLINE_SERVER_UNAVAILABLE)
-				{
-					errorMessage = isGerman ? L"Server nicht erreichbar oder falsches offline OTP!" :
-						L"Server unreachable or wrong offline OTP!";
-				}
-				else if (_piStatus == EVOSOL_ENDPOINT_SERVER_UNAVAILABLE)
-				{
-					errorMessage = isGerman ? L"Server nicht erreichbar!" : L"Server unreachable!";
-				}
-				else if (_piStatus == EVOSOL_ENDPOINT_SETUP_ERROR)
-				{
-					errorMessage = isGerman ? L"Fehler beim Verbindungsaufbau!" : L"Error while setting up the connection!";
-				}
 				ShowErrorMessage(errorMessage, errorCode);
-				if (!bRepeatStepTwo)
-				{
-					_util.ResetScenario(this, m_pCredProvCredentialEvents);
-				}
-				else
-				{
-					// nothing or something?
-					DebugPrint(L"Repeating step two, clear = " + std::to_wstring(m_config->clearFields));
-				}
+				retVal = S_FALSE;
+				_util.ResetScenario(this, m_pCredProvCredentialEvents);
+
 				*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+				_piStatus = EVOSOL_STATUS_NOT_SET;
 			}
 		}
 		else if (_piStatus == EVOSOL_AUTH_SUCCESS || m_config->pushAuthenticationSuccessful)
@@ -1101,8 +1078,8 @@ HRESULT CEvoCredential::GetSerialization90(
 
 			// Reset the authentication
 			_piStatus = EVOSOL_STATUS_NOT_SET;
-			m_config->pushAuthenticationSuccessful = false;
-			//_privacyIDEA.stopPoll();
+			_privacyIDEA.stopPoll();
+			m_config->ClearSuccessFlags();
 
 			std::wstring domainToUse = m_config->credential.domain; // GetDomainOrMachineIncludingRegistry(); 
 
@@ -1121,12 +1098,15 @@ HRESULT CEvoCredential::GetSerialization90(
 			}
 
 			if (!SUCCEEDED(hr))
+			{
+				ReleaseDebugPrint(L"Login failed");
 				retVal = S_FALSE;
+			}
 		}
 		else
 		{
 			// privacyIDEA had this block, but IDK how it can actually get to here
-			ShowErrorMessage(L"Unexpected error", 0);
+			ShowErrorMessage(L"Unexpected error hmmm", 0);
 
 			// Jump to the first login window
 			_util.ResetScenario(this, m_pCredProvCredentialEvents);
@@ -1161,12 +1141,11 @@ HRESULT CEvoCredential::GetSerialization90(
 
 void CEvoCredential::PushEvoAuthenticationCallback(bool success)
 {
-	DebugPrint(__FUNCTION__);
+//	DebugPrint(__FUNCTION__);
 	if (success)
 	{
-		m_config->pushAuthenticationSuccessful = true;
-		m_config->doAutoLogon = true;
-		m_config->bypassPrivacyIDEA = true;
+		DebugPrint(L"Push Success");
+		m_config->SetSuccessFlags();
 		m_config->provider.pCredentialProviderEvents->CredentialsChanged(m_config->provider.upAdviseContext);
 	}
 }

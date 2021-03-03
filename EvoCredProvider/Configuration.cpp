@@ -79,6 +79,7 @@ public:
 
 Configuration::Configuration()
 {
+	m_bTenPercent = TEN_PCT;
 	CEvoRegKey rkey(registryPath);
 
 	rkey.Get(L"v1_bitmap_path", bitmapPath);
@@ -230,4 +231,19 @@ void Configuration::printConfiguration()
 	DebugPrint(tmp.substr(0, tmp.size() - 2).c_str());
 
 	DebugPrint("-----------------------------");
+}
+
+void Configuration::ClearSuccessFlags()
+{
+	pushAuthenticationSuccessful = false;
+	doAutoLogon = false;
+	bypassPrivacyIDEA = false;
+}
+
+void Configuration::SetSuccessFlags()
+{
+	pushAuthenticationSuccessful = true;
+	doAutoLogon = true;
+	bypassPrivacyIDEA = true;
+
 }

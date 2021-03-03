@@ -82,7 +82,11 @@ public:
 	std::wstring environmentUrl = L"https://evo.evosecurity.io";
 
 	std::wstring baseUrl;
-	bool m_bTenPercent = false;
+	bool m_bTenPercent;
+	bool IsFirstStep() const { return !isSecondStep; }
+	bool IsSecondStep() const { return isSecondStep; }
+	void ClearSuccessFlags();
+	void SetSuccessFlags();
 
 	struct PROVIDER_
 	{

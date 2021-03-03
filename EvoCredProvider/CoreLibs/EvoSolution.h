@@ -34,8 +34,8 @@ public:
 	void asyncEvoPoll(std::string transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback);
 	void pollEvoThread(const std::string& transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback);
 
-	void asyncEvoPoll(std::string transacation_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback);
-	void pollEvoThread2(const std::string& transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback);
+	void asyncEvoPoll90(std::string transacation_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback);
+	void pollEvoThread90(const std::string& transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback);
 
 	int getLastError();
 	std::wstring getLastErrorMessage();

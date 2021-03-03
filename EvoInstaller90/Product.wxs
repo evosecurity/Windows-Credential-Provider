@@ -115,22 +115,22 @@
 
 						<Component Location="local" Guid="53765cdb-f170-4df2-9b83-ad49d7b88cd9" Transitive="yes">
 							<Condition>1</Condition>
-							<File Id="libssl" Name="libssl-1_1-x64.dll" Source="$(var.EvoCredProvider.TargetDir)libssl-1_1-x64.dll" KeyPath="yes"/>
+							<File Id="libssl" Name="libssl-1_1-x64.dll" Source="$(var.EvoCredProvider90.TargetDir)libssl-1_1-x64.dll" KeyPath="yes"/>
 							<RemoveFile Id="Removelibssl" Name="libssl-1_1-x64.dll" On="uninstall"/>
 						</Component>
 						<Component Location="local" Guid="89bc9be0-3210-4f83-9501-20a039e058be" Transitive="yes">
 							<Condition>1</Condition>
-							<File Id="libcrypto" Name="libcrypto-1_1-x64.dll" Source="$(var.EvoCredProvider.TargetDir)libcrypto-1_1-x64.dll" KeyPath="yes"/>
+							<File Id="libcrypto" Name="libcrypto-1_1-x64.dll" Source="$(var.EvoCredProvider90.TargetDir)libcrypto-1_1-x64.dll" KeyPath="yes"/>
 							<RemoveFile Id="Removelibcrypto" Name="libcrypto-1_1-x64.dll" On="uninstall"/>
 						</Component>
 
 						<Component Location="local" Guid="9b4ad2a9-bf9a-42a1-b1a0-6a7be313e06c" Transitive="yes">
 							<Condition>1</Condition>
-							<File Id="EvoCredProvider"
-								Name="$(var.EvoCredProvider.TargetFileName)"
-								Source="$(var.EvoCredProvider.TargetPath)"
+							<File Id="EvoCredProvider90"
+								Name="$(var.EvoCredProvider90.TargetFileName)"
+								Source="$(var.EvoCredProvider90.TargetPath)"
 								KeyPath="yes" />
-							<RemoveFile Id="RemoveEvoCredProviderDll" Name="$(var.EvoCredProvider.TargetFileName)" On="uninstall"/>
+							<RemoveFile Id="RemoveEvoCredProviderDll" Name="$(var.EvoCredProvider90.TargetFileName)" On="uninstall"/>
 
 							<RegistryKey Root='HKLM' Key='SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)' ForceCreateOnInstall='yes' >
 								<RegistryValue Name='hostname'              Type='string'  Value='[HOSTNAME]'           />
@@ -141,14 +141,14 @@
 							</RegistryKey>
 
 							<RegistryKey Root='HKCR' Key='CLSID\{$(var.ProviderRegistryGUID)}' ForceCreateOnInstall='yes'>
-								<RegistryValue Type='string' Value='$(var.EvoCredProvider.TargetName)' />
+								<RegistryValue Type='string' Value='$(var.EvoCredProvider90.TargetName)' />
 								<RegistryKey Key='InprocServer32'>
-									<RegistryValue Type='string' Value='[INSTALLFOLDER]$(var.EvoCredProvider.TargetFileName)' />
+									<RegistryValue Type='string' Value='[INSTALLFOLDER]$(var.EvoCredProvider90.TargetFileName)' />
 									<RegistryValue Name='ThreadingModel' Type='string' Value='Apartment' />
 								</RegistryKey>
 							</RegistryKey>
 
-							<RegistryValue Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{$(var.ProviderRegistryGUID)}' Type='string' Value='$(var.EvoCredProvider.TargetName)' />
+							<RegistryValue Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{$(var.ProviderRegistryGUID)}' Type='string' Value='$(var.EvoCredProvider90.TargetName)' />
 							<RemoveRegistryKey Root='HKLM' Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Authentication\Credential Providers\{$(var.ProviderRegistryGUID)}' Action='removeOnUninstall'/>
 
 
@@ -177,7 +177,7 @@
 						</Component>
 
 						<!--<Component Location='local' Guid='922385D2-6165-4677-B5AA-30A20F797780'>
-							<File Id='EvoApiTest' Name='EvoApiTest.exe' Source='$(var.EvoCredProvider.TargetDir)EvoApiTest.exe' KeyPath='yes'/>
+							<File Id='EvoApiTest' Name='EvoApiTest.exe' Source='$(var.EvoCredProvider90.TargetDir)EvoApiTest.exe' KeyPath='yes'/>
 							<RemoveFile Id='RemoveEvoApiTest' Name="EvoApiTest.exe" On="uninstall" />
 						</Component>-->
 
@@ -191,7 +191,7 @@
 			<Feature Id='MainInstall' Title='Core components' Description='Core $(var.ProductName) components' Level='1' AllowAdvertise='no' Absent='disallow' InstallDefault="local">
 				<ComponentRef Id='libssl' />
 				<ComponentRef Id='libcrypto' />
-				<ComponentRef Id='EvoCredProvider' />
+				<ComponentRef Id='EvoCredProvider90' />
 			</Feature>
 
 			<Feature Id='InstallAsDefault' Title='Default provider' Description='Install $(var.ProductName) as default provider. No other provider will be allowed to be used for logon.' Level='1000' AllowAdvertise='no' InstallDefault="local">
