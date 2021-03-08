@@ -88,6 +88,8 @@ public:
 	void ClearSuccessFlags();
 	void SetSuccessFlags();
 
+	std::map<std::string, std::string> mapMFAs;
+
 	struct PROVIDER_
 	{
 		ICredentialProviderEvents* pCredentialProviderEvents = nullptr;

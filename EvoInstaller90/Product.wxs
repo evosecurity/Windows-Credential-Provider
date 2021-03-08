@@ -68,18 +68,6 @@
 			<RegistrySearch Id="SearchDOMAIN" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="domain" Win64="$(var.Win64)" Type="raw"/>
 		</Property>
 
-		<Property Id="LOGIN_TEXT">
-			<RegistrySearch Id="SearchLoginText"              Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="login_text"               Win64="$(var.Win64)" Type="raw" />
-		</Property>
-
-		<Property Id="OTP_TEXT">
-			<RegistrySearch Id="SearchOTPText"              Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="otp_text"               Win64="$(var.Win64)" Type="raw" />
-		</Property>
-
-		<Property Id="V1_BITMAP_PATH">
-			<RegistrySearch Id="SearchV1BitmapPath"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="v1_bitmap_path"           Win64="$(var.Win64)" Type="raw" />
-		</Property>
-
 		<Property Id="RELEASE_LOG">
 			<RegistrySearch Id="SearchProdLog"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="release_log"           Win64="$(var.Win64)" Type="raw" />
 		</Property>
@@ -87,6 +75,8 @@
 		<Property Id="EXCLUDEDUSER">
 			<RegistrySearch Id="ExcludedUser" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="excluded_account" Win64="$(var.Win64)" Type="raw" />
 		</Property>
+
+		<Property Id="SOLEPROVIDER"/>
 
 		<SetProperty Action="FixRegs3" Id="RELEASE_LOG" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (RELEASE_LOG=1)</SetProperty>
 
@@ -137,6 +127,7 @@
 								<RegistryValue Name='path'                  Type='string'  Value='[PATH]'           />
 								<RegistryValue Name='environmentUrl' Type='string' Value='[ENVIRONMENTURL]' />
 								<RegistryValue Name='domain' Type='string' Value='[DOMAIN]' />
+								<RegistryValue Name='release_log' Type='string' Value='[RELEASE_LOG]' />
 								<RegistryValue Name='excluded_account' Type='string' Value='[EXCLUDEDUSER]' />
 							</RegistryKey>
 
@@ -194,7 +185,9 @@
 				<ComponentRef Id='EvoCredProvider90' />
 			</Feature>
 
-			<Feature Id='InstallAsDefault' Title='Default provider' Description='Install $(var.ProductName) as default provider. No other provider will be allowed to be used for logon.' Level='1000' AllowAdvertise='no' InstallDefault="local">
+			<Feature Id='InstallAsDefault' Title='Sole credential provider' Description='Install $(var.ProductName) as sole credential provider. Users will be required to use Evo Secure Login.' Level='1000' AllowAdvertise='no' InstallDefault="local">
+				<Condition Level="1">SOLEPROVIDER=1</Condition>
+				<Condition Level="0">SOLEPROVIDER=0</Condition>
 				<ComponentRef Id='CredentialProviderFilter' />
 				<ComponentRef Id='ActivateCredentialProviderFilter' />
 			</Feature>
@@ -220,10 +213,6 @@
 
 			<!-- Custom dialogs -->
 			<DialogRef Id="ServerConfigurationDlg" />
-			<DialogRef Id="UserConfigurationDlg" />
-			<!--
-      <DialogRef Id="SecurityConfigurationDlg" />
-      //-->
 
 			<!-- Queue custom dialogs start/end -->
 			<!-- Start -->

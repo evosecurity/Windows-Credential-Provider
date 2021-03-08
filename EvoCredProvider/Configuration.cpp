@@ -25,6 +25,7 @@
 #include "EvoConsts.h"
 #include "EvoSolution.h"
 #include <atlstr.h>
+#include "DataProtectHelper.h"
 
 using namespace std;
 using namespace ATL;
@@ -74,6 +75,28 @@ public:
 		bool bRet = (m_hKey != 0 && ERROR_SUCCESS == QueryDWORDValue(value_name, dw));
 		b = (dw != 0);
 		return bRet;
+	}
+
+	bool Get(LPCWSTR value_name, std::vector<BYTE>& bytes)
+	{
+
+		DWORD dwSize = 0;
+		if (!(ERROR_SUCCESS == QueryBinaryValue(value_name, nullptr, &dwSize)))
+			return false;
+
+		if (dwSize > 0)
+		{
+			std::vector<BYTE> bytesRead;
+			bytesRead.resize(dwSize);
+
+			ULONG nBytes = dwSize;
+			if (ERROR_SUCCESS == QueryBinaryValue(value_name, &bytesRead.front(), &nBytes) && nBytes == dwSize)
+			{
+				bytes = bytesRead;
+				return true;
+			}
+		}
+		return false;
 	}
 };
 
@@ -136,6 +159,18 @@ Configuration::Configuration()
 
 	MakeBaseUrl();
 
+	try {
+		std::vector<BYTE> bytesMFA;
+		if (rkey.Get(L"MFAs", bytesMFA))
+		{
+			auto map = ReadStringMap(bytesMFA);
+			mapMFAs = map;
+		}
+	}
+	catch (...) {
+	}
+
+
 	// Realm Mapping
 	rkey.Get(L"default_realm", piconfig.defaultRealm);
 	if (rkey) rkey.Close();
@@ -172,6 +207,7 @@ Configuration::Configuration()
 	winVerMajor = info.dwMajorVersion;
 	winVerMinor = info.dwMinorVersion;
 	winBuildNr = info.dwBuildNumber;
+
 }
 
 void Configuration::MakeBaseUrl()
@@ -245,5 +281,10 @@ void Configuration::SetSuccessFlags()
 	pushAuthenticationSuccessful = true;
 	doAutoLogon = true;
 	bypassPrivacyIDEA = true;
-
 }
+
+template <class T>
+std::vector<BYTE> StoreMap(std::map<string, T> map);
+
+template <class T>
+std::map<string, T> ReadMap(std::vector<BYTE> bytes);

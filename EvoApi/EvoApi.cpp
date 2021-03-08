@@ -513,6 +513,7 @@ bool EvoAPI::ValidateMFA90(const std::wstring& wsMFACode, const std::wstring& ws
             return false;
 
         // there's an "offline_code" ... but what do do about it?
+        response.offline_code = to_string(j["offline_code"]);
 
         bRet = true;
     }
@@ -557,13 +558,14 @@ bool EvoAPI::Authenticate90(const std::wstring& wsUser, AuthenticateResponse& re
     return bRet;
 }
 
-bool EvoAPI::CheckLoginRequest(std::string request_id)
+bool EvoAPI::CheckLoginRequest(std::string request_id, CheckLogin90Response& response)
 {
     WCHAR szBuf[1024];
     SecureZeroMemory(szBuf, sizeof(szBuf));
     wsprintf(szBuf, _T("check_login_request?request_id=%S"), request_id.c_str());
 
     auto connectResponse = Connect(szBuf, "", L"GET");
+    response.assign(connectResponse);
     if (connectResponse.dwStatus != HTTP_STATUS_OK)
         return false;
 
@@ -577,7 +579,7 @@ bool EvoAPI::CheckLoginRequest(std::string request_id)
         if (!bSuccess)
             return false;
 
-        int offline_code = j["offline_code"];
+        response.offline_code = to_string(j["offline_code"]);
         bRet = true;
     }
     catch (...) {

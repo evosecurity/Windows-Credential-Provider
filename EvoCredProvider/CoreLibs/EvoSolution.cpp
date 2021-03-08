@@ -107,16 +107,23 @@ void EvoSolution::pollEvoThread90(const std::string& transaction_id, std::shared
 	this_thread::sleep_for(chrono::milliseconds(100));
 
 	bool success = false;
+	int its = 0;
+	const int max_its = 200;
 	while (_runPoll.load())
 	{
+		EvoAPI::CheckLogin90Response response;
 		EvoAPI evoapi(p->baseUrl, p->environmentUrl);
-		if (evoapi.CheckLoginRequest(transaction_id))
+		if (evoapi.CheckLoginRequest(transaction_id, response))
 		{
 			_runPoll.store(false);
 			success = true;
 			break;
 		}
-		this_thread::sleep_for(chrono::milliseconds(500));
+		++its;
+		if (its >= max_its) {
+			break;
+		}
+		this_thread::sleep_for(chrono::milliseconds(1000));
 	}
 
 	if (success)

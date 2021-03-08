@@ -216,7 +216,8 @@ void TestPoll90()
         cout << "Checking ...  " << endl;
 
         EvoAPI evo;
-        LoginGood = evo.CheckLoginRequest(response.request_id);
+        EvoAPI::CheckLogin90Response checkLogin90Response;
+        LoginGood = evo.CheckLoginRequest(response.request_id, checkLogin90Response);
         if (LoginGood)
         {
             cout << "\nChecked ok" << endl;

@@ -11,7 +11,7 @@
 #include "helpers.h"
 #include "guids.h"
 
-#define DesperatePrint(x) 
+#define DesperatePrint(x)
 
 using namespace std;
 

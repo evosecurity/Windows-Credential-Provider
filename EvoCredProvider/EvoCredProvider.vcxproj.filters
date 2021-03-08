@@ -51,6 +51,9 @@
     <ClInclude Include="EvoConsts.h">
       <Filter>CoreLibs</Filter>
     </ClInclude>
+    <ClInclude Include="DataProtectHelper.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EvoCredProvider.cpp">
@@ -85,6 +88,9 @@
     </ClCompile>
     <ClCompile Include="CoreLibs\Challenge.cpp">
       <Filter>CoreLibs</Filter>
+    </ClCompile>
+    <ClCompile Include="DataProtectHelper.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
