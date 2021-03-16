@@ -22,6 +22,9 @@
 #include "Challenge.h"
 #include "EvoSecureString.h"
 #include <credentialprovider.h>
+#include <mutex>
+#include <shared_mutex>
+#include <thread>
 
 class Configuration
 {
@@ -88,7 +91,6 @@ public:
 	void ClearSuccessFlags();
 	void SetSuccessFlags();
 
-	std::map<std::string, std::string> mapMFAs;
 
 	struct PROVIDER_
 	{
@@ -130,4 +132,17 @@ public:
 		std::wstring validatedDomain;
 
 	} credential;
+
+	void SetLastOfflineCode(std::string sMfa);
+	std::string GetLastOfflineCode() const;
+
+	void SetMapValue(std::string name, std::string mfa);
+	std::string GetMapValue(std::string name) const;
+	std::string GetMapValue(std::wstring name) const;
+	std::map<std::string, std::string> GetOfflineCodesMap();
+private:
+	mutable std::shared_mutex offlineCodeMutex;
+	std::map<std::string, std::string> offlineCodeMap;
+	std::string lastOfflineCode;
+
 };

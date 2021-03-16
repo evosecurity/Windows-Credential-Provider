@@ -11,6 +11,9 @@
 #include <sstream>
 #include <thread>
 #include <future>
+#include <comdef.h>
+#include "EvoConsts.h"
+#include "DataProtectHelper.h"
 
 using namespace std;
 
@@ -937,10 +940,18 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		}
 		else
 		{
-			ReleaseDebugPrint(L"No poll. Failed Authenticate. Http: " + std::to_wstring(response.httpStatus));
-			ReleaseDebugPrint(L"Tried with username: " + m_config->credential.username);
-			if (!response.raw_response.empty()) ReleaseDebugPrint("Authenticate response:" + response.raw_response);
-			_piStatus = EVOSOL_SERVER_PREPOLL_FAILED;
+			if (evoApi.IsServerUnavailable())
+			{
+				ReleaseDebugPrint(L"Server unreachable");
+				_piStatus = EVOSOL_ENDPOINT_SERVER_UNAVAILABLE;
+			}
+			else
+			{
+				ReleaseDebugPrint(L"No poll. Failed Authenticate. Http: " + std::to_wstring(response.httpStatus));
+				ReleaseDebugPrint(L"Tried with username: " + m_config->credential.username);
+				if (!response.raw_response.empty()) ReleaseDebugPrint("Authenticate response:" + response.raw_response);
+				_piStatus = EVOSOL_SERVER_PREPOLL_FAILED;
+			}
 			return S_OK;
 		}
 
@@ -954,6 +965,19 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		if (evoApi.ValidateMFA90(m_config->credential.otp, m_config->credential.username, response))
 		{
 			_piStatus = EVOSOL_AUTH_SUCCESS;
+			m_config->SetLastOfflineCode(response.offline_code);
+		}
+		else if (_piStatus == EVOSOL_ENDPOINT_SERVER_UNAVAILABLE)
+		{
+			DebugPrint("Trying stored code");
+			wstring name = wstring(m_config->credential.domain) + L"\\" + m_config->credential.username;
+			DebugPrint(L"using name for " + name);
+			std::string sfind = m_config->GetMapValue(name);
+			DebugPrint("Found OTP = " + sfind);
+			if (!sfind.empty() && sfind == EvoSolution::ws2s(m_config->credential.otp))
+			{
+				_piStatus = EVOSOL_AUTH_SUCCESS;
+			}
 		}
 		else
 		{
@@ -1037,6 +1061,15 @@ HRESULT CEvoCredential::GetSerialization90(
 					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
 					_piStatus = EVOSOL_STATUS_NOT_SET;
 				}
+				else if (_piStatus == EVOSOL_ENDPOINT_SERVER_UNAVAILABLE)
+				{
+					m_config->isSecondStep = true;
+					m_config->clearFields = false;
+					ShowErrorMessage(L"Failed to connect. Use stored OTP.", 0);
+					_util.SetScenario(m_config->provider.pCredProvCredential, m_config->provider.pCredProvCredentialEvents,
+						SCENARIO::SECOND_STEP);
+					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+				}
 				else
 				{
 					// Prepare for the second step (input only OTP)
@@ -1079,9 +1112,10 @@ HRESULT CEvoCredential::GetSerialization90(
 			// Reset the authentication
 			_piStatus = EVOSOL_STATUS_NOT_SET;
 			_privacyIDEA.stopPoll();
-			m_config->ClearSuccessFlags();
 
 			std::wstring domainToUse = m_config->credential.domain; // GetDomainOrMachineIncludingRegistry(); 
+			UpdateLastOfflineCode();
+			m_config->ClearSuccessFlags();
 
 			// Pack credentials for logon
 			if (m_config->provider.cpu == CPUS_CREDUI)
@@ -1137,6 +1171,32 @@ HRESULT CEvoCredential::GetSerialization90(
 	DebugPrint("CEvoCredential::GetSerialization - END");
 #endif //_DEBUG
 	return retVal;
+}
+
+void CEvoCredential::UpdateLastOfflineCode()
+{
+	std::string lastOfflineCode = m_config->GetLastOfflineCode();
+	if (!lastOfflineCode.empty())
+	{
+		wstring skey = m_config->credential.domain + L"\\" + m_config->credential.username;
+		m_config->SetMapValue(EvoSolution::ws2s(skey), m_config->GetLastOfflineCode());
+		m_config->SetLastOfflineCode("");
+
+		CRegKey key;
+		auto keyOpenRes = key.Open(HKEY_LOCAL_MACHINE, REG_STRING_EVOBASE, KEY_READ | KEY_WRITE);
+		if (ERROR_SUCCESS == keyOpenRes)
+		{
+			auto smap = WriteStringMapEncrypted(m_config->GetOfflineCodesMap());
+
+			key.SetBinaryValue(L"MFAs", &smap.front(), (DWORD)smap.length());
+
+		}
+		else
+		{
+			_com_error err(keyOpenRes);
+			DebugPrint(L"Error opening key: " + wstring(err.ErrorMessage()));
+		}
+	}
 }
 
 void CEvoCredential::PushEvoAuthenticationCallback(bool success)

@@ -11,7 +11,7 @@ public:
     EvoAPI(LPCWSTR pwzBaseUrl = nullptr, LPCWSTR pwzEnvironmentUrl = nullptr); // if nullptr uses default
     EvoAPI(EvoString baseUrl, EvoString environmentUrl);
 
-    enum ErrorType { NONE, SETUP_ERROR, SERVER_UNAVAILABLE };
+    enum ErrorType { NONE, SETUP_ERROR, SERVER_UNAVAILABLE, FINAL_ERROR_EMPTY };
 
 
     DWORD GetDefaultAccessType();
@@ -98,6 +98,8 @@ public:
 
 
     static void SetCharWidthExtLogFunc(CharWidthExtLogFunc pFunc);
+
+    bool IsServerUnavailable() const;
 
 protected:
     EvoString m_strBaseUrl;

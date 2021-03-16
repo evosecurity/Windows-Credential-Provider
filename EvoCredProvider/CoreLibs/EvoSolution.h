@@ -14,6 +14,7 @@ public:
 	static std::string ws2s(const std::wstring& ws);
 	static std::wstring toUpperCase(std::wstring s);
 	static std::wstring s2ws(const std::string& s);
+	static std::string toLower(std::string s);
 
 	HRESULT validateCheck(const std::wstring& username, const std::wstring& domain, const SecureWString& otp, const std::string& transaction_id = std::string());
 

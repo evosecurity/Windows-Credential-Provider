@@ -98,6 +98,34 @@ public:
 		}
 		return false;
 	}
+
+	bool GetBytes(LPCWSTR value_name, std::string& s)
+	{
+		DWORD dwSize = 0;
+		if (!(ERROR_SUCCESS == QueryBinaryValue(value_name, nullptr, &dwSize)))
+			return false;
+
+		size_t szt = (size_t)dwSize + 1;
+
+		if (dwSize > 0) {
+			auto buf = make_unique<char[]>(szt );
+			memset(buf.get(), 0, szt);
+
+			ULONG nBytes = dwSize;
+			if (ERROR_SUCCESS == QueryBinaryValue(value_name, buf.get(), &nBytes) && nBytes == dwSize)
+			{
+				s = buf.get();
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool PutBytes(LPCWSTR value_name, std::string s)
+	{
+		return ERROR_SUCCESS == SetBinaryValue(value_name, &s.front(), (DWORD) s.length());
+	}
 };
 
 Configuration::Configuration()
@@ -158,13 +186,12 @@ Configuration::Configuration()
 	rkey.Get(L"environmentUrl", environmentUrl);
 
 	MakeBaseUrl();
-
+	std::unique_lock<std::shared_mutex> lock(offlineCodeMutex);
 	try {
-		std::vector<BYTE> bytesMFA;
-		if (rkey.Get(L"MFAs", bytesMFA))
+		std::string bytesMFA;
+		if (rkey.GetBytes(L"MFAs", bytesMFA))
 		{
-			auto map = ReadStringMap(bytesMFA);
-			mapMFAs = map;
+			offlineCodeMap = ReadStringMapDecrypted(bytesMFA);
 		}
 	}
 	catch (...) {
@@ -288,3 +315,42 @@ std::vector<BYTE> StoreMap(std::map<string, T> map);
 
 template <class T>
 std::map<string, T> ReadMap(std::vector<BYTE> bytes);
+
+std::string Configuration::GetLastOfflineCode() const
+{
+	std::shared_lock<std::shared_mutex> lock(offlineCodeMutex);
+	return lastOfflineCode;
+}
+
+void Configuration::SetLastOfflineCode(std::string mfa)
+{
+	std::unique_lock<std::shared_mutex> lock(offlineCodeMutex);
+	lastOfflineCode = mfa;
+}
+
+std::string Configuration::GetMapValue(std::string name) const
+{
+	std::shared_lock<std::shared_mutex> lock(offlineCodeMutex);
+	auto it = offlineCodeMap.find(EvoSolution::toLower(name));
+	if (it != offlineCodeMap.end())
+		return it->second;
+	return ""; // if not found, return empty string
+}
+
+std::string Configuration::GetMapValue(std::wstring name) const
+{
+	std::string sname = EvoSolution::ws2s(name);
+	return GetMapValue(sname);
+}
+
+void Configuration::SetMapValue(std::string name, std::string mfa)
+{
+	std::unique_lock<std::shared_mutex> lock(offlineCodeMutex);
+	offlineCodeMap[EvoSolution::toLower(name)] = mfa;
+}
+
+std::map<string, string> Configuration::GetOfflineCodesMap()
+{
+	std::shared_lock<std::shared_mutex> lock(offlineCodeMutex);
+	return offlineCodeMap;
+}

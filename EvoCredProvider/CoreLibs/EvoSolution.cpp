@@ -11,7 +11,6 @@ using namespace std;
 
 void EvoSolution::Initialize(PICONFIG conf)
 {
-
 }
 
 HRESULT EvoSolution::validateCheck(const std::wstring& username, const std::wstring& domain, const SecureWString& otp, const std::string& transaction_id)
@@ -96,6 +95,7 @@ void EvoSolution::pollEvoThread(const std::string& transaction_id, std::wstring 
 
 void EvoSolution::asyncEvoPoll90(std::string transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback)
 {
+	p->SetLastOfflineCode("");
 	_runPoll.store(true);
 	std::thread t(&EvoSolution::pollEvoThread90, this, transaction_id, p, callback);
 	t.detach();
@@ -117,6 +117,7 @@ void EvoSolution::pollEvoThread90(const std::string& transaction_id, std::shared
 		{
 			_runPoll.store(false);
 			success = true;
+			p->SetLastOfflineCode(response.offline_code);
 			break;
 		}
 		++its;
@@ -165,4 +166,10 @@ std::wstring EvoSolution::s2ws(const std::string& s)
 	std::wstring_convert<convert_typeX, wchar_t> converterX;
 
 	return converterX.from_bytes(s);
+}
+
+std::string EvoSolution::toLower(std::string s)
+{
+	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+	return s;
 }

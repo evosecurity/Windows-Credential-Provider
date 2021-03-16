@@ -86,6 +86,7 @@ protected:
 
 
 	bool IsAccountExcluded();
+	void UpdateLastOfflineCode();
 
 
 	std::shared_ptr<Configuration> m_config;

@@ -317,10 +317,15 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 
     if (evoApiResponse.sResponse.empty())
     {
-        m_dwLastError = SERVER_UNAVAILABLE;
+        m_dwLastError = FINAL_ERROR_EMPTY;
     }
 
     return evoApiResponse;
+}
+
+bool EvoAPI::IsServerUnavailable() const
+{
+    return m_dwLastError == SERVER_UNAVAILABLE;
 }
 
 bool EvoAPI::Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, AuthenticateResponse& response)

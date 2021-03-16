@@ -238,6 +238,20 @@ int main()
         return -1;
     }
 
+    HINSTANCE hMod = GetModuleHandle(_T("evocredprovider90.dll"));
+    if (hMod)
+    {
+        auto f = GetProcAddress(hMod, "TestReadWriteMap");
+        if (f != nullptr)
+            f();
+
+        f = GetProcAddress(hMod, "TestReadWriteCryptMap");
+        if (f != nullptr)
+            f();
+    }
+
+
+
     lpCredProvider->SetUsageScenario(CPUS_LOGON, 0);
 
 
