@@ -189,7 +189,7 @@ Configuration::Configuration()
 	std::unique_lock<std::shared_mutex> lock(offlineCodeMutex);
 	try {
 		std::string bytesMFA;
-		if (rkey.GetBytes(L"MFAs", bytesMFA))
+		if (rkey.GetBytes(REG_STRING_OFFLINE_CACHE, bytesMFA))
 		{
 			offlineCodeMap = ReadStringMapDecrypted(bytesMFA);
 		}

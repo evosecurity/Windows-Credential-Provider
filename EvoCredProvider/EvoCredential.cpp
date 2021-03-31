@@ -1188,7 +1188,7 @@ void CEvoCredential::UpdateLastOfflineCode()
 		{
 			auto smap = WriteStringMapEncrypted(m_config->GetOfflineCodesMap());
 
-			key.SetBinaryValue(L"MFAs", &smap.front(), (DWORD)smap.length());
+			key.SetBinaryValue(REG_STRING_OFFLINE_CACHE, &smap.front(), (DWORD)smap.length());
 
 		}
 		else
