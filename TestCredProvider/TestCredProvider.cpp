@@ -248,6 +248,10 @@ int main()
         f = GetProcAddress(hMod, "TestReadWriteCryptMap");
         if (f != nullptr)
             f();
+
+        f = GetProcAddress(hMod, "TestReadWriteCryptMapDataProtected");
+        if (f != nullptr)
+            f();
     }
 
 

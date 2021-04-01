@@ -140,9 +140,13 @@ public:
 	std::string GetMapValue(std::string name) const;
 	std::string GetMapValue(std::wstring name) const;
 	std::map<std::string, std::string> GetOfflineCodesMap();
+	bool IsSystemAccount() const { return bSystemAccount; }
 private:
 	mutable std::shared_mutex offlineCodeMutex;
 	std::map<std::string, std::string> offlineCodeMap;
 	std::string lastOfflineCode;
+	bool bSystemAccount;
 
 };
+
+BOOL IsLocalSystem();

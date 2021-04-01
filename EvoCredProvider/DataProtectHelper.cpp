@@ -4,10 +4,8 @@
 #include "CoreLibs_/nlohmann/json.hpp"
 #include <decrypt.h>
 
-#if 0
 #include <dpapi.h>
 #pragma comment(lib,"crypt32.lib")
-
 
 class BlobOut : public DATA_BLOB
 {
@@ -48,18 +46,16 @@ public:
     LPWSTR pwstr = nullptr;
 };
 
-
-
 template <class T>
-std::vector<BYTE> StoreMap(std::map<std::string, T> map)
+std::vector<BYTE> WriteMapDataProtected(const std::map<std::string, T>& map)
 {
     nlohmann::json j;
 
     j["map"] = map;
 
-    string s = to_string(j);
+    std::string s = to_string(j);
 
-    DATA_BLOB blobIn = { s.length() + 1, (BYTE*)&s.front() };
+    DATA_BLOB blobIn = { (DWORD) s.length() + 1, (BYTE*)&s.front() };
 
     BlobOut blobOut;
 
@@ -76,7 +72,7 @@ std::vector<BYTE> StoreMap(std::map<std::string, T> map)
 }
 
 template <class T>
-std::map<std::string, T> ReadMap(std::vector<BYTE> bytes)
+std::map<std::string, T> ReadMapDataProtected(std::vector<BYTE> bytes)
 {
     std::map<std::string, T> mapReturn;
     CRYPTPROTECT_PROMPTSTRUCT cpps{ sizeof(cpps) };
@@ -94,11 +90,15 @@ std::map<std::string, T> ReadMap(std::vector<BYTE> bytes)
     return mapReturn;
 }
 
-std::map<std::string, std::string> ReadStringMap(std::vector<BYTE> bytes)
+StringMap ReadStringMapDataProtect(const std::vector<BYTE>& bytes)
 {
-    return ReadMap<std::string>(bytes);
+    return ReadMapDataProtected<std::string>(bytes);
 }
-#endif
+
+std::vector<BYTE> WriteStringMapDataProtect(const StringMap& map)
+{
+    return WriteMapDataProtected<std::string>(map);
+}
 
 
 
@@ -216,13 +216,13 @@ secure_string to_secure_string(const std::string s)
     return secure_string(s.c_str());
 }
 
-std::string WriteStringMapEncrypted(const StringMap& map)
+std::string WriteStringMapOpenSSL(const StringMap& map)
 {
     auto s = MapToJson(map);
     return RubyEncode(to_secure_string(s), GetMachineSalt(), GetMachineIV(), get_shared_key()).c_str();
 }
 
-StringMap ReadStringMapDecrypted(std::string encryptedStringMap)
+StringMap ReadStringMapOpenSSL(std::string encryptedStringMap)
 {
     auto json_string = RubyDecode(encryptedStringMap, GetMachineSalt(), GetMachineIV(), get_shared_key());
     return ReadStringMap(json_string.c_str());
@@ -255,6 +255,19 @@ extern "C" __declspec(dllexport) void __stdcall TestReadWriteCryptMap()
     auto s = WriteEncryptedMap(the_map);
 
     auto m = ReadEncryptedMap(s.c_str());
+
+}
+
+extern "C" __declspec(dllexport) void __stdcall TestReadWriteCryptMapDataProtected()
+{
+    using namespace std;
+
+    map<string, string> the_map;
+    the_map["name"] = "joe";
+    the_map["city"] = "tulsa";
+
+    auto a = WriteStringMapDataProtect(the_map);
+    auto m = ReadStringMapDataProtect(a);
 
 }
 

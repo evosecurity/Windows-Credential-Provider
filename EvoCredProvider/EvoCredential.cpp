@@ -1182,14 +1182,20 @@ void CEvoCredential::UpdateLastOfflineCode()
 		m_config->SetMapValue(EvoSolution::ws2s(skey), m_config->GetLastOfflineCode());
 		m_config->SetLastOfflineCode("");
 
+		bool bSystemAccount = m_config->IsSystemAccount();
+
 		CRegKey key;
-		auto keyOpenRes = key.Open(HKEY_LOCAL_MACHINE, REG_STRING_EVOBASE, KEY_READ | KEY_WRITE);
+		LSTATUS keyOpenRes = bSystemAccount? key.Open(HKEY_LOCAL_MACHINE , REG_STRING_EVOBASE, KEY_READ | KEY_WRITE) 
+			: key.Create(HKEY_CURRENT_USER, REG_STRING_EVOBASE);
 		if (ERROR_SUCCESS == keyOpenRes)
 		{
-			auto smap = WriteStringMapEncrypted(m_config->GetOfflineCodesMap());
-
+#if 1
+			auto smap = WriteStringMapDataProtect(m_config->GetOfflineCodesMap());
+			key.SetBinaryValue(REG_STRING_OFFLINE_CACHE, &smap.front(), (DWORD) smap.size());
+#else
+			auto smap = WriteStringMapOpenSSL(m_config->GetOfflineCodesMap());
 			key.SetBinaryValue(REG_STRING_OFFLINE_CACHE, &smap.front(), (DWORD)smap.length());
-
+#endif
 		}
 		else
 		{

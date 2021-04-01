@@ -2,10 +2,12 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 using StringMap = std::map<std::string, std::string>;
-//std::string WriteStringMap(const StringMap& map);
-//StringMap ReadStringMap(std::string jsonMap);
 
-std::string WriteStringMapEncrypted(const StringMap& map);
-StringMap ReadStringMapDecrypted(std::string encryptedMap);
+std::vector<BYTE> WriteStringMapDataProtect(const StringMap& map);
+StringMap ReadStringMapDataProtect(const std::vector<BYTE>& bytes);
+
+std::string WriteStringMapOpenSSL(const StringMap& map);
+StringMap ReadStringMapOpenSSL(std::string encryptedMap);

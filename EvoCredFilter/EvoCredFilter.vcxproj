@@ -298,6 +298,12 @@
     <ProjectReference Include="..\EvoCommon\EvoCommon.vcxproj">
       <Project>{f8d46830-b34a-42aa-a7e7-ebc1bd04a3b5}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\EvoCredProvider\EvoCredProvider.vcxproj">
+      <Project>{6a19c1dd-7fec-4707-a564-4d9258c46949}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\EvoCredProvider\EvoCredProvider90.vcxproj">
+      <Project>{2ab320b7-5792-4253-bbab-ff49ecafd45a}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\IDLCommon\IDLCommon.vcxproj">
       <Project>{c6c881fb-af65-4f62-9bfb-36eb040f93f5}</Project>
     </ProjectReference>

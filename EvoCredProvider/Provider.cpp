@@ -75,14 +75,23 @@ void CProvider::_GetSerializedCredentials(PWSTR* username, PWSTR* password, PWST
 	}
 }
 
+
 STDMETHODIMP CProvider::SetUsageScenario(_CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, unsigned long dwFlags)
 {
 	m_cpus = cpus;
 	m_dwCpusFlags = dwFlags;
 	DesperatePrint(string(__FUNCTION__) + ": " + Shared::CPUStoString(cpus));
 #ifdef _DEBUG
-	DesperatePrint(string(__FUNCTION__) + ": " + Shared::CPUStoString(cpus));
-	//m_config->printConfiguration();
+	DebugPrint(m_config->IsSystemAccount() ? "SYSTEM account" : "USER account");
+	// m_config->printConfiguration();
+
+	auto map = m_config->GetOfflineCodesMap();
+	for (auto& p : map)
+	{
+		DebugPrint(std::string("[map] ") + p.first + " = " + p.second);
+	}
+	if (map.empty())
+		DebugPrint("Map is empty");
 #endif
 	HRESULT hr = E_INVALIDARG;
 
