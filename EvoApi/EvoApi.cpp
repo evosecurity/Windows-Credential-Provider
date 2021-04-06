@@ -594,3 +594,7 @@ bool EvoAPI::CheckLoginRequest(std::string request_id, CheckLogin90Response& res
     return bRet;
 }
 
+bool EvoAPI::BasicResponse::IsServerError() const
+{
+    return httpStatus == HTTP_STATUS_SERVER_ERROR;
+}

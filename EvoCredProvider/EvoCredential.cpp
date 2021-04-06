@@ -14,6 +14,7 @@
 #include <comdef.h>
 #include "EvoConsts.h"
 #include "DataProtectHelper.h"
+#include <winhttp.h>
 
 using namespace std;
 
@@ -940,10 +941,16 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		}
 		else
 		{
+			bool bHasStoredOTP = !m_config->GetStoredOTP().empty();
 			if (evoApi.IsServerUnavailable())
 			{
 				ReleaseDebugPrint(L"Server unreachable");
-				_piStatus = EVOSOL_ENDPOINT_SERVER_UNAVAILABLE;
+				_piStatus = bHasStoredOTP ? EVOSOL_ENDPOINT_SERVER_UNAVAILABLE : EVOSOL_ENDPOINT_SERVER_UNAVAILABLE_NO_OTP;
+			}
+			else if (response.IsServerError())
+			{
+				ReleaseDebugPrint(L"Internal server error.");
+				_piStatus = bHasStoredOTP ? EVOSOL_ENDPOINT_SERVER_UNAVAILABLE : EVOSOL_ENDPOINT_SERVER_UNAVAILABLE_NO_OTP;
 			}
 			else
 			{
@@ -962,12 +969,9 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 
 		EvoAPI::ValidateMFA90Response response;
 		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
-		if (evoApi.ValidateMFA90(m_config->credential.otp, m_config->credential.username, response))
-		{
-			_piStatus = EVOSOL_AUTH_SUCCESS;
-			m_config->SetLastOfflineCode(response.offline_code);
-		}
-		else if (_piStatus == EVOSOL_ENDPOINT_SERVER_UNAVAILABLE)
+
+		// TODO: CONSIDER THAT MAYBE YOU SHOULD ONLY RETURN THE NEXT RETURN CODE IF THERE IS A STORED CODE FOR THAT USER NAME!!!!
+		if (_piStatus == EVOSOL_ENDPOINT_SERVER_UNAVAILABLE)
 		{
 			DebugPrint("Trying stored code");
 			wstring name = wstring(m_config->credential.domain) + L"\\" + m_config->credential.username;
@@ -978,6 +982,11 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 			{
 				_piStatus = EVOSOL_AUTH_SUCCESS;
 			}
+		}
+		else if (evoApi.ValidateMFA90(m_config->credential.otp, m_config->credential.username, response))
+		{
+			_piStatus = EVOSOL_AUTH_SUCCESS;
+			m_config->SetLastOfflineCode(response.offline_code);
 		}
 		else
 		{
@@ -1069,6 +1078,15 @@ HRESULT CEvoCredential::GetSerialization90(
 					_util.SetScenario(m_config->provider.pCredProvCredential, m_config->provider.pCredProvCredentialEvents,
 						SCENARIO::SECOND_STEP);
 					*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+				}
+				else if (_piStatus == EVOSOL_ENDPOINT_SERVER_UNAVAILABLE_NO_OTP)
+				{
+					m_config->isSecondStep = false;
+					m_config->clearFields = false;
+					ShowErrorMessage(L"Failed to successfully connect to server.", 0);
+					_util.ResetScenario(this, m_pCredProvCredentialEvents);
+					*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+					_piStatus = EVOSOL_STATUS_NOT_SET;
 				}
 				else
 				{
@@ -1179,7 +1197,7 @@ void CEvoCredential::UpdateLastOfflineCode()
 	if (!lastOfflineCode.empty())
 	{
 		wstring skey = m_config->credential.domain + L"\\" + m_config->credential.username;
-		m_config->SetMapValue(EvoSolution::ws2s(skey), m_config->GetLastOfflineCode());
+		m_config->SetMapValue(EvoSolution::ws2s(skey), lastOfflineCode);
 		m_config->SetLastOfflineCode("");
 
 		bool bSystemAccount = m_config->IsSystemAccount();
@@ -1189,13 +1207,16 @@ void CEvoCredential::UpdateLastOfflineCode()
 			: key.Create(HKEY_CURRENT_USER, REG_STRING_EVOBASE);
 		if (ERROR_SUCCESS == keyOpenRes)
 		{
+			auto offlineCodesMap = m_config->GetOfflineCodesMap();
+			if (!offlineCodesMap.empty()) {
 #if 1
-			auto smap = WriteStringMapDataProtect(m_config->GetOfflineCodesMap());
-			key.SetBinaryValue(REG_STRING_OFFLINE_CACHE, &smap.front(), (DWORD) smap.size());
+				auto smap = WriteStringMapDataProtect(offlineCodesMap);
+				key.SetBinaryValue(REG_STRING_OFFLINE_CACHE, &smap.front(), (DWORD)smap.size());
 #else
-			auto smap = WriteStringMapOpenSSL(m_config->GetOfflineCodesMap());
-			key.SetBinaryValue(REG_STRING_OFFLINE_CACHE, &smap.front(), (DWORD)smap.length());
+				auto smap = WriteStringMapOpenSSL(m_config->GetOfflineCodesMap());
+				key.SetBinaryValue(REG_STRING_OFFLINE_CACHE, &smap.front(), (DWORD)smap.length());
 #endif
+			}
 		}
 		else
 		{

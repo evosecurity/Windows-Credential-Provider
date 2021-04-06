@@ -39,6 +39,7 @@ public:
             httpStatus = rhs.dwStatus;
             raw_response = rhs.sResponse;
         }
+        bool IsServerError() const;
     };
 
     struct AuthenticateResponse : public BasicResponse

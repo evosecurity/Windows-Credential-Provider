@@ -141,6 +141,8 @@ public:
 
 Configuration::Configuration()
 {
+	bSystemAccount = IsLocalSystem() != 0;
+
 	m_bTenPercent = TEN_PCT;
 	CEvoRegKey rkey(registryPath);
 
@@ -211,7 +213,7 @@ Configuration::Configuration()
 		else
 		{
 			CEvoRegKey rk(HKEY_CURRENT_USER, registryPath);
-			if (rk.GetBytes(REG_STRING_OFFLINE_CACHE, bytesMFA))
+			if (rk && rk.GetBytes(REG_STRING_OFFLINE_CACHE, bytesMFA))
 			{
 				offlineCodeMap = ReadStringMapDataProtect(bytesMFA);
 			}
@@ -266,7 +268,6 @@ Configuration::Configuration()
 	winVerMinor = info.dwMinorVersion;
 	winBuildNr = info.dwBuildNumber;
 
-	bSystemAccount = IsLocalSystem() != 0;
 }
 
 void Configuration::MakeBaseUrl()
@@ -385,6 +386,13 @@ std::map<string, string> Configuration::GetOfflineCodesMap()
 {
 	std::shared_lock<std::shared_mutex> lock(offlineCodeMutex);
 	return offlineCodeMap;
+}
+
+std::string Configuration::GetStoredOTP()
+{
+	auto name = credential.domain + L"\\" + credential.username;
+	return GetMapValue(EvoSolution::toLower(EvoSolution::ws2s(name)));
+
 }
 
 // function from StackOverflow

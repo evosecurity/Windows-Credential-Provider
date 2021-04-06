@@ -141,6 +141,7 @@ public:
 	std::string GetMapValue(std::wstring name) const;
 	std::map<std::string, std::string> GetOfflineCodesMap();
 	bool IsSystemAccount() const { return bSystemAccount; }
+	std::string GetStoredOTP();
 private:
 	mutable std::shared_mutex offlineCodeMutex;
 	std::map<std::string, std::string> offlineCodeMap;
