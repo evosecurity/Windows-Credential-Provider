@@ -412,19 +412,33 @@ HRESULT CEvoCredential::GetCheckboxValue(DWORD dwFieldID, BOOL* pbChecked, PWSTR
 {
 	// Called to check the initial state of the checkbox
 	DebugPrint(__FUNCTION__);
-	UNREFERENCED_PARAMETER(dwFieldID);
-	UNREFERENCED_PARAMETER(ppwszLabel);
-	*pbChecked = FALSE;
-	//SHStrDupW(L"Use offline token.", ppwszLabel); // TODO custom text?
+	HRESULT hr = S_OK;
+	if (dwFieldID == FID_CONTEXT_CHANGER)
+	{
+		*pbChecked = m_config->m_bTenPercent ? TRUE : FALSE;
+		hr = SHStrDupW(L"Elevated Login", ppwszLabel);
+		//SHStrDupW(L"Use offline token.", ppwszLabel); // TODO custom text?
+	}
+	else
+	{
+		hr = E_INVALIDARG;
+	}
 
-	return S_OK;
+	return hr;
 }
 
 HRESULT CEvoCredential::SetCheckboxValue(DWORD dwFieldID, BOOL bChecked)
 {
-	UNREFERENCED_PARAMETER(dwFieldID);
-	UNREFERENCED_PARAMETER(bChecked);
 	DebugPrint(__FUNCTION__);
+	HRESULT hr = S_OK;
+	if (dwFieldID == FID_CONTEXT_CHANGER)
+	{
+		m_config->m_bTenPercent = (bChecked != FALSE);
+	}
+	else
+	{
+		hr = E_INVALIDARG;
+	}
 	return S_OK;
 }
 

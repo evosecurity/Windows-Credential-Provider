@@ -274,8 +274,10 @@ int _tmain(int argc, wchar_t* argv[])
     //EvoAPI::SetCharWidthLog(TheFuncToLog);
     EvoAPI::SetCharWidthExtLogFunc(TheFuncExtToLog);
 
-    TestMFA90();
+    //TestMFA90();
+    //TestPoll90();
 
-    TestPoll90();
+    TestMFA10();
+    TestPoll10();
 
 }

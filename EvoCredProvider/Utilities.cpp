@@ -19,7 +19,7 @@ void Utilities::SetConfiguration(std::shared_ptr<Configuration> c)
 	_config = c;
 }
 
-const std::wstring Utilities::texts[10][2] = {
+const std::wstring Utilities::texts[][2] = {
 		{L"Username", L"Benutzername"},
 		{L"Password", L"Kennwort"},
 		{L"Old Password", L"Altes Kennwort"},
@@ -29,7 +29,8 @@ const std::wstring Utilities::texts[10][2] = {
 		{L"One-Time Password", L"Einmalpassword"},
 		{L"Wrong One-Time Password!", L"Falsches Einmalpasswort!"},
 		{L"Wrong password", L"Das Kennwort ist falsch. Wiederholen Sie den Vorgang."},
-		{L"Please enter your second factor!", L"Bitte geben Sie ihren zweiten Faktor ein!"}
+		{L"Please enter your second factor!", L"Bitte geben Sie ihren zweiten Faktor ein!"},
+		{L"Elevated Login", L"ElevatedLogin"}
 };
 
 std::wstring Utilities::GetTranslatedText(int id)

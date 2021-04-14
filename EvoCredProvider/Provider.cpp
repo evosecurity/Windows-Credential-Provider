@@ -274,7 +274,11 @@ STDMETHODIMP CProvider::GetFieldDescriptorAt(unsigned long dwIndex, struct _CRED
 			if (label.empty())
 				label = Utilities::GetTranslatedText(TEXT_OTP);
 			break;
-		default: break;
+		case FID_CONTEXT_CHANGER:
+			//DebugPrint(L"Getting Context Changer Text");
+			//label = Utilities::GetTranslatedText(TEXT_CONTEXT_CHANGER);
+			label = L"Cracked";
+			break;
 		}
 
 		if (!label.empty())
