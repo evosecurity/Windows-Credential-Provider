@@ -143,7 +143,7 @@ Configuration::Configuration()
 {
 	bSystemAccount = IsLocalSystem() != 0;
 
-	m_bTenPercent = TEN_PCT;
+	//m_bTenPercent = TEN_PCT;
 	CEvoRegKey rkey(registryPath);
 
 	rkey.Get(L"v1_bitmap_path", bitmapPath);
@@ -197,6 +197,9 @@ Configuration::Configuration()
 
 	rkey.Get(L"specialKey", specialKey);
 	rkey.Get(L"environmentUrl", environmentUrl);
+
+	rkey.Get(L"credential_mode", m_nMode);
+	m_bTenPercent = IsTenMode();
 
 	MakeBaseUrl();
 	std::unique_lock<std::shared_mutex> lock(offlineCodeMutex);

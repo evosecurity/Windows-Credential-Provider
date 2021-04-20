@@ -236,7 +236,7 @@ STDMETHODIMP CProvider::GetFieldDescriptorCount(unsigned long* pdwCount)
 {
 	DesperatePrint(__FUNCTION__);
 
-	*pdwCount = FID_NUM_FIELDS;
+	*pdwCount = m_config->IsFullMode() ? FID_NUM_FIELDS : FID_NUM_FIELDS - 1;
 
 	return S_OK;
 }

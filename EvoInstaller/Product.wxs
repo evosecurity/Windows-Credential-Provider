@@ -108,12 +108,14 @@
 		</Property>
 
 		<Property Id="RELEASE_LOG">
-			<RegistrySearch Id="SearchProdLog"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="release_log"           Win64="$(var.Win64)" Type="raw" />
+			<RegistrySearch Id="SearchProdLog" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="release_log" Win64="$(var.Win64)" Type="raw" />
 		</Property>
 
-		<!--<Property Id="TWO_STEP_HIDE_OTP" Value="1">
-	  <RegistrySearch Id="SearchTwoStepHideOTP" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="two_step_hide_otp"  Win64="$(var.Win64)" Type="raw" />
-	</Property>-->
+		<Property Id="CREDENTIAL_MODE" Value="100">
+			<RegistrySearch Id="SearchCredentialMode" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="credential_mode" Win64="$(var.Win64)" Type="raw"/>
+		</Property>
+
+
 
 		<SetProperty Action="FixRegs3" Id="RELEASE_LOG" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (RELEASE_LOG=1)</SetProperty>
 
@@ -162,10 +164,10 @@
 							<RegistryKey Root='HKLM' Key='SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)' ForceCreateOnInstall='yes' >
 								<RegistryValue Name='hostname'              Type='string'  Value='[HOSTNAME]'           />
 								<RegistryValue Name='path'                  Type='string'  Value='[PATH]'           />
-								<RegistryValue Name='specialKey'            Type='string'  Value='[APIKEY]'          />
 								<RegistryValue Name='release_log'         Type='integer' Value='[RELEASE_LOG]' />
 								<RegistryValue Name='environmentUrl' Type='string' Value='[ENVIRONMENTURL]' />
 								<RegistryValue Name='domain' Type='string' Value='[DOMAIN]' />
+								<RegistryValue Name='credential_mode' Type='integer' Value='[CREDENTIAL_MODE]' />
 							</RegistryKey>
 
 							<RegistryKey Root='HKCR' Key='CLSID\{$(var.ProviderRegistryGUID)}' ForceCreateOnInstall='yes'>
@@ -182,6 +184,13 @@
 
 							<RemoveFolder Id="RemoveInstallFolder" On="uninstall"/>
 							<RemoveFolder Id="RemoveCompanyFolderIfEmpty" Directory="CompanyFolder" On="uninstall"/>
+						</Component>
+
+						<Component Location="local" Id="SpecialKeyRegEntry" Guid="7FB57E15-DEA3-4EA6-A2D0-059724E19881">
+							<Condition>CREDENTIAL_MODE="10" or CREDENTIAL_MODE="100"</Condition>
+							<RegistryKey Root='HKLM' Key='SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)' >
+								<RegistryValue Name='specialKey' Type='string'  Value='[APIKEY]'/>
+							</RegistryKey>
 						</Component>
 
 						<Component Location="local" Guid="73e6eefa-766e-4aeb-9ac1-032071af13c7">
@@ -209,7 +218,7 @@
 							<RemoveFile Id='RemoveEvoApiTest' Name="EvoApiTest.exe" On="uninstall" />
 						</Component>-->
 
-						</Directory>
+					</Directory>
 				</Directory>
 			</Directory>
 
@@ -220,6 +229,7 @@
 				<ComponentRef Id='libssl' />
 				<ComponentRef Id='libcrypto' />
 				<ComponentRef Id='EvoCredProvider' />
+				<ComponentRef Id='SpecialKeyRegEntry'/>
 			</Feature>
 
 			<Feature Id='InstallAsDefault' Title='Default provider' Description='Install $(var.ProductName) as default provider. No other provider will be allowed to be used for logon.' Level='1000' AllowAdvertise='no' InstallDefault="local">

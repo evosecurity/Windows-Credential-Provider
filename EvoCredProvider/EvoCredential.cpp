@@ -415,7 +415,7 @@ HRESULT CEvoCredential::GetCheckboxValue(DWORD dwFieldID, BOOL* pbChecked, PWSTR
 	HRESULT hr = S_OK;
 	if (dwFieldID == FID_CONTEXT_CHANGER)
 	{
-		*pbChecked = m_config->m_bTenPercent ? TRUE : FALSE;
+		*pbChecked =  m_config->m_bTenPercent ? TRUE : FALSE;
 		hr = SHStrDupW(L"Elevated Login", ppwszLabel);
 		//SHStrDupW(L"Use offline token.", ppwszLabel); // TODO custom text?
 	}
