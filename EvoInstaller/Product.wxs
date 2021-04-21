@@ -32,7 +32,7 @@
 			 Version="$(var.Version)"
 			 UpgradeCode="a857e24b-638d-4a2e-b525-49e3d51de74d">
 
-		<Package Id="*" InstallerVersion="405" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated"
+		<Package Id="*" InstallerVersion="406" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated"
 				 Manufacturer="$(var.Publisher)"
 				 Description="$(var.ProductName) $(var.Version) Setup" />
 
@@ -111,11 +111,21 @@
 			<RegistrySearch Id="SearchProdLog" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="release_log" Win64="$(var.Win64)" Type="raw" />
 		</Property>
 
-		<Property Id="CREDENTIAL_MODE" Value="100">
+		<Property Id="CREDENTIAL_MODE" Value="100"/>
+		
+		<Property Id="OLD_CREDENTIAL_MODE">
 			<RegistrySearch Id="SearchCredentialMode" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="credential_mode" Win64="$(var.Win64)" Type="raw"/>
 		</Property>
 
+		<SetProperty Action="x1" Id="CREDENTIAL_MODE" Value="100" After="AppSearch">OLD_CREDENTIAL_MODE="#100"</SetProperty>
+		<SetProperty Action="x2" Id="CREDENTIAL_MODE" Value="90"  After="AppSearch">OLD_CREDENTIAL_MODE="#90"</SetProperty>
+		<SetProperty Action="x3" Id="CREDENTIAL_MODE" Value="10"  After="AppSearch">OLD_CREDENTIAL_MODE="#10"</SetProperty>
 
+		<Property Id="EXCLUDEDUSER">
+			<RegistrySearch Id="ExcludedUser" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="excluded_account" Win64="$(var.Win64)" Type="raw" />
+		</Property>
+
+		<Property Id="SOLEPROVIDER"/>
 
 		<SetProperty Action="FixRegs3" Id="RELEASE_LOG" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (RELEASE_LOG=1)</SetProperty>
 
@@ -167,6 +177,7 @@
 								<RegistryValue Name='release_log'         Type='integer' Value='[RELEASE_LOG]' />
 								<RegistryValue Name='environmentUrl' Type='string' Value='[ENVIRONMENTURL]' />
 								<RegistryValue Name='domain' Type='string' Value='[DOMAIN]' />
+								<RegistryValue Name='excluded_account' Type='string' Value='[EXCLUDEDUSER]' />
 								<RegistryValue Name='credential_mode' Type='integer' Value='[CREDENTIAL_MODE]' />
 							</RegistryKey>
 
@@ -232,7 +243,9 @@
 				<ComponentRef Id='SpecialKeyRegEntry'/>
 			</Feature>
 
-			<Feature Id='InstallAsDefault' Title='Default provider' Description='Install $(var.ProductName) as default provider. No other provider will be allowed to be used for logon.' Level='1000' AllowAdvertise='no' InstallDefault="local">
+			<Feature Id='InstallAsDefault' Title='Sole credential provider' Description='Install $(var.ProductName) as sole credential provider. Users will be required to use Evo Secure Login.' Level='1000' AllowAdvertise='no' InstallDefault="local">
+				<Condition Level="1">SOLEPROVIDER=1</Condition>
+				<Condition Level="0">SOLEPROVIDER=0</Condition>
 				<ComponentRef Id='CredentialProviderFilter' />
 				<ComponentRef Id='ActivateCredentialProviderFilter' />
 			</Feature>
@@ -258,10 +271,6 @@
 
 			<!-- Custom dialogs -->
 			<DialogRef Id="ServerConfigurationDlg" />
-			<DialogRef Id="UserConfigurationDlg" />
-			<!--
-      <DialogRef Id="SecurityConfigurationDlg" />
-      //-->
 
 			<!-- Queue custom dialogs start/end -->
 			<!-- Start -->
