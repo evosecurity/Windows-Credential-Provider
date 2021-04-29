@@ -45,20 +45,20 @@
 					<Condition Action="disable">CREDENTIAL_MODE="90"</Condition>
 					<Condition Action="enable">CREDENTIAL_MODE="10" or CREDENTIAL_MODE="100"</Condition>
 				</Control>
-				<Control Type="GroupBox" Id="Groupy" Width="240" Height="40" X="45" Y="161" Text="Operating Mode" />
-				<Control Type="RadioButtonGroup" Property="CREDENTIAL_MODE" Id="RadioGroup" Width="220" Height="30" X="68" Y="170">
+				<Control Type="GroupBox" Id="Groupy" Width="240" Height="42" X="45" Y="161" Text="Operating Mode" />
+				<Control Type="RadioButtonGroup" Property="CREDENTIAL_MODE" Id="RadioGroup" Width="220" Height="30" X="50" Y="170">
                     <RadioButtonGroup Property="CREDENTIAL_MODE">
-                        <RadioButton Text="Elevated Login/ Secure Login" Height="30" Value="100" Width="70" X="0" Y="0" />
-                        <RadioButton Text="Secure Login" Height="30" Value="90" Width="60" X="75" Y="0" />
-                        <RadioButton Text="Elevated Login" Height="30" Value="10" Width="70" X="145" Y="0" />
-                    </RadioButtonGroup>
+                        <RadioButton Text="Secure Login" Height="30" Value="90" Width="60" X="0" Y="0" ToolTip="Install credential profider for secure 2FA login"/>
+                        <RadioButton Text="Elevated Login" Height="30" Value="10" Width="70" X="70" Y="0" ToolTip="Install credential provider for elevated 2FA login"/>
+						<RadioButton Text="Elevated Login/ Secure Login" Height="30" Value="100" Width="70" X="145" Y="0" ToolTip="Install credential provider that is capable of both the Elevated (2FA administrator) and Secure (2FA) login"/>
+					</RadioButtonGroup>
                 </Control>
 
-				<Control Id="ReleaseVersionLog" Type="CheckBox" X="52" Y="210" Width="220" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create log file in production use." />
+				<Control Id="AzureCheckBox" Type="CheckBox" X="45" Y="210" Width="50" Height="17" Property="AZURE_AD" CheckBoxValue="1" Text="AzureAD" ToolTip="Substitue AzureAD as the domain when username has @ symbol">
+					
+				</Control>
+				<Control Id="ReleaseVersionLog" Type="CheckBox" X="100" Y="210" Width="180" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create log file" />
 
-				<!--<Control Id="ChangeSettingsLabel" Type="Text" X="45" Y="222" Width="220" Height="15" TabSkip="no" Text="{\Tahoma_Bold} These settings can be changed in the registry." />-->
-
-				<!-- Bottom Controls -->
                 <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
                     <Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>
                 </Control>

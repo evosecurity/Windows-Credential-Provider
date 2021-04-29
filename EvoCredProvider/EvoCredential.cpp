@@ -1014,6 +1014,26 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 	return S_OK;
 }
 
+
+wstring GetAzureADJoinDomain()
+{
+	wstring wret;
+	PDSREG_JOIN_INFO pJoinInfo = NULL;
+	NetGetAadJoinInformation(NULL, &pJoinInfo);
+
+	if (pJoinInfo)
+	{
+		wstring email = pJoinInfo->pszJoinUserEmail;
+		size_t find = email.find('@');
+		if (find != wstring::npos)
+			wret = email.substr(find + 1);
+		NetFreeAadJoinInformation(pJoinInfo);
+	}
+
+	return wret;
+}
+
+
 HRESULT CEvoCredential::GetSerialization90(
 	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
 	__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
@@ -1145,7 +1165,18 @@ HRESULT CEvoCredential::GetSerialization90(
 			_piStatus = EVOSOL_STATUS_NOT_SET;
 			_privacyIDEA.stopPoll();
 
-			std::wstring domainToUse = m_config->credential.domain; // GetDomainOrMachineIncludingRegistry(); 
+			std::wstring domainToUse = m_config->credential.domain; // GetDomainOrMachineIncludingRegistry();
+			size_t findAmpersand = m_config->credential.username.find(L"@");
+			if (findAmpersand != wstring::npos)
+			{
+				auto azureADJoinDomain = GetAzureADJoinDomain();
+				if (!azureADJoinDomain.empty())
+				{
+					wstring afterAmpersand = m_config->credential.username.substr(findAmpersand + 1);
+					if (EvoSolution::toUpperCase(afterAmpersand) == EvoSolution::toUpperCase(azureADJoinDomain))
+						domainToUse = L"AzureAD";
+				}
+			}
 			UpdateLastOfflineCode();
 			m_config->ClearSuccessFlags();
 

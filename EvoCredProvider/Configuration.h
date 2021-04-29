@@ -149,6 +149,7 @@ public:
 	bool IsNinetyMode() const { return m_nMode == NINETY_PERCENT_MODE; }
 	bool IsTenMode() const { return m_nMode == TEN_PERCENT_MODE; }
 
+	bool IsAzureAD() const { return azureAD; }
 private:
 	mutable std::shared_mutex offlineCodeMutex;
 	std::map<std::string, std::string> offlineCodeMap;
@@ -156,6 +157,7 @@ private:
 	bool bSystemAccount;
 
 	int m_nMode = NINETY_PERCENT_MODE;
+	bool azureAD = false;
 
 };
 

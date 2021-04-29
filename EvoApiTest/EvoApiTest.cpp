@@ -8,6 +8,7 @@
 #include <Lmwksta.h>
 #include <StrSafe.h>
 #include <LMAPIbuf.h>
+#include <LMJoin.h>
 
 #pragma warning(disable : 4996)
 #pragma comment(lib, "netapi32.lib")
@@ -237,8 +238,29 @@ void TestPoll90()
 }
 
 
+wstring GetAzureADJoinDomain()
+{
+    wstring wret;
+    PDSREG_JOIN_INFO pJoinInfo = NULL;
+    NetGetAadJoinInformation(NULL, &pJoinInfo);
+
+    if (pJoinInfo)
+    {
+        wstring email =  pJoinInfo->pszJoinUserEmail;
+        size_t find = email.find('@');
+        if (find != wstring::npos)
+            wret = email.substr(find + 1);
+        NetFreeAadJoinInformation(pJoinInfo);
+    }
+
+    return wret;
+}
+
 int _tmain(int argc, wchar_t* argv[])
 {
+
+    wstring AzureADDomain = GetAzureADJoinDomain();
+
     std::wstring domainNameBuf = GetDomainOrMachineIncludingRegistry();
     wcout << "Domain name (or Computer name): " << domainNameBuf << endl;
 

@@ -107,11 +107,14 @@
 			<RegistrySearch Id="SearchV1BitmapPath"           Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="v1_bitmap_path"           Win64="$(var.Win64)" Type="raw" />
 		</Property>
 
-		<Property Id="RELEASE_LOG">
+		<Property Id="RELEASE_LOG"/>
+		<Property Id="OLD_RELEASE_LOG">
 			<RegistrySearch Id="SearchProdLog" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="release_log" Win64="$(var.Win64)" Type="raw" />
 		</Property>
+		<SetProperty Action="x0" Id="RELEASE_LOG" Value="1" After="AppSearch">NOT (OLD_RELEASE_LOG="#0" or OLD_RELEASE_LOG="")</SetProperty>
 
-		<Property Id="CREDENTIAL_MODE" Value="100"/>
+
+		<Property Id="CREDENTIAL_MODE" Value="90"/>
 		
 		<Property Id="OLD_CREDENTIAL_MODE">
 			<RegistrySearch Id="SearchCredentialMode" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="credential_mode" Win64="$(var.Win64)" Type="raw"/>
@@ -125,9 +128,16 @@
 			<RegistrySearch Id="ExcludedUser" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="excluded_account" Win64="$(var.Win64)" Type="raw" />
 		</Property>
 
+		<Property Id="AZURE_AD"/>
+		<Property Id="OLD_AZURE_AD">
+			<RegistrySearch Id="SearchAzureAD" Root="HKLM" Key="SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)" Name="azure_ad" Win64="$(var.Win64)" Type="raw" />
+		</Property>
+		<SetProperty Action="x4" Id="AZURE_AD" Value="1" After="AppSearch">NOT (OLD_AZURE_AD="#0" or OLD_AZURE_AD="")</SetProperty>
+
 		<Property Id="SOLEPROVIDER"/>
 
-		<SetProperty Action="FixRegs3" Id="RELEASE_LOG" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (RELEASE_LOG=1)</SetProperty>
+		<SetProperty Action="FixRegRelease" Id="RELEASE_LOG" Value="0"  Before="WriteRegistryValues" Sequence="execute">NOT (RELEASE_LOG=1)</SetProperty>
+		<SetProperty Action="FixRegAzure" Id="AZURE_AD" Value="0" Before="WriteRegistryValues" Sequence="execute"> NOT (AZURE_AD=1)</SetProperty>
 
 
 		<Directory Id="TARGETDIR" Name="SourceDir">
@@ -204,6 +214,13 @@
 							</RegistryKey>
 						</Component>
 
+						<Component Location='local' Id='AzureKeyRegEntry' Guid="7FB57E16-DEA3-4EA6-A2D0-059724E19881">
+							<Condition>CREDENTIAL_MODE="90" or CREDENTIAL_MODE="100"</Condition>
+							<RegistryKey Root='HKLM' Key='SOFTWARE\$(var.ShortManufacturer)\$(var.SimpleProductName)' >
+								<RegistryValue Name='azure_ad' Type='integer'  Value='[AZURE_AD]'/>
+							</RegistryKey>
+						</Component>
+
 						<Component Location="local" Guid="73e6eefa-766e-4aeb-9ac1-032071af13c7">
 							<File Id="CredentialProviderFilter" Name="$(var.EvoCredFilter.TargetFileName)" Source="$(var.EvoCredFilter.TargetPath)" KeyPath="yes"/>
 							<RemoveFile Id="RemoveCredentialProviderFilterFiles" Name="$(var.EvoCredFilter.TargetFileName)" On="uninstall" />
@@ -241,6 +258,7 @@
 				<ComponentRef Id='libcrypto' />
 				<ComponentRef Id='EvoCredProvider' />
 				<ComponentRef Id='SpecialKeyRegEntry'/>
+				<ComponentRef Id='AzureKeyRegEntry'/>
 			</Feature>
 
 			<Feature Id='InstallAsDefault' Title='Sole credential provider' Description='Install $(var.ProductName) as sole credential provider. Users will be required to use Evo Secure Login.' Level='1000' AllowAdvertise='no' InstallDefault="local">
