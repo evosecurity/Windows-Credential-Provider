@@ -5,6 +5,8 @@
 #include "scenario.h"
 #include "guids.h"
 #include <Shlwapi.h>
+#include <comdef.h>
+
 using namespace std;
 
 #define LoggerPrint DebugPrint
@@ -29,14 +31,28 @@ const std::wstring Utilities::texts[][2] = {
 		{L"One-Time Password", L"Einmalpassword"},
 		{L"Wrong One-Time Password!", L"Falsches Einmalpasswort!"},
 		{L"Wrong password", L"Das Kennwort ist falsch. Wiederholen Sie den Vorgang."},
-		{L"Please enter your second factor!", L"Bitte geben Sie ihren zweiten Faktor ein!"},
+		{L"Please approve the push notification or enter your 6-digit code", L"Bitte geben Sie ihren zweiten Faktor ein!"},
 		{L"Elevated Login", L"ElevatedLogin"}
 };
 
+
+std::wstring LoadString(UINT id)
+{
+	WCHAR buf[256];
+	int len = ::LoadString(GetResInstance(), id, buf, _countof(buf));
+	if (len == 0)
+	{
+		return L"";
+	}
+	return buf;
+}
+
 std::wstring Utilities::GetTranslatedText(int id)
 {
-	const int inGerman = GetUserDefaultUILanguage() == 1031; // 1031 is german
-	return texts[id][inGerman];
+	//const int inGerman = GetUserDefaultUILanguage() == 1031; // 1031 is german
+	//return texts[id][inGerman];
+
+	return LoadString(id + IDS_USERNAME);
 }
 
 HRESULT Utilities::KerberosLogon(

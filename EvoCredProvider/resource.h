@@ -4,7 +4,18 @@
 //
 #define IDS_PROJNAME                    100
 #define IDR_TESTCREDPROVIDER            101
-#define IDR_PROVIDER                    106
+#define IDR_PROVIDER                    107
+#define IDS_USERNAME                    101
+#define IDS_PASSWORD                    102
+#define IDS_OLD_PASSWORD                103
+#define IDS_NEW_PASSWORD                104
+#define IDS_CONFIRM_PASSWORD            105
+#define IDS_SIGN_IN_TO                  106
+#define IDS_ONE_TIME_PASSWORD           107
+#define IDS_WRONG_ONE_TIME_PASSWORD     108
+#define IDS_WRONG_PASSWORD              109
+#define IDS_OTP_PROMPT                  110
+#define IDS_ELEVATED_LOGIN              111
 #define IDB_BITMAP1                     201
 #define IDB_TILE_IMAGE                  201
 #define IDB_TILE_PNG                    202
