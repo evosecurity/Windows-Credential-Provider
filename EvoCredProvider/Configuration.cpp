@@ -201,8 +201,6 @@ Configuration::Configuration()
 	rkey.Get(L"credential_mode", m_nMode);
 	m_bTenPercent = IsTenMode();
 
-	rkey.Get(L"azure_ad", azureAD);
-
 	MakeBaseUrl();
 	std::unique_lock<std::shared_mutex> lock(offlineCodeMutex);
 	try {

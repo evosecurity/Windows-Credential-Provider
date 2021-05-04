@@ -29,4 +29,6 @@
 #include <algorithm>
 
 
+HINSTANCE GetResInstance();
+
 #endif //PCH_H

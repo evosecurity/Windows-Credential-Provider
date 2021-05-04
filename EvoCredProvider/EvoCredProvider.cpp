@@ -131,4 +131,7 @@ STDAPI DllInstall(BOOL bInstall, _In_opt_  LPCWSTR pszCmdLine)
 	return hr;
 }
 
-
+HINSTANCE GetResInstance()
+{
+	return _AtlBaseModule.GetResourceInstance();
+}

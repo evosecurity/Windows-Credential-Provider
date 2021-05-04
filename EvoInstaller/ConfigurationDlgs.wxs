@@ -35,7 +35,7 @@
                 <Control Id="EnvironmentUrl" Type="Edit" X="115" Y="80" Width="170" Height="15" Property="ENVIRONMENTURL" />
                 <Control Id="DomainLabel" Type="Text" X="45" Y="100" Width="40" Height="15" TabSkip="no" Text="Domain:" />
                 <Control Id="Domain" Type="Edit" X="80" Y="100" Width="205" Height="15" Property="DOMAIN" />
-                <Control Type="Text" Id="ExcludedAccountLabel" Width="74" Height="17" X="45" Y="120" Text="Excluded Account:" />
+                <Control Type="Text" Id="ExcludedAccountLabel" Width="74" Height="17" X="45" Y="120" Text="Fail-safe User:" />
                 <Control Type="Edit" Id="ExcludedAccountEdit" Width="169" Height="15" X="117" Y="120" Property="EXCLUDEDUSER" />
 				<Control Id="ApiKeyLabel" Type="Text" X="45" Y="140" Width="50" Height="15" TabSkip="no" Text="Shared Key:">
 					<Condition Action="disable">CREDENTIAL_MODE="90"</Condition>
@@ -54,10 +54,7 @@
 					</RadioButtonGroup>
                 </Control>
 
-				<Control Id="AzureCheckBox" Type="CheckBox" X="45" Y="210" Width="50" Height="17" Property="AZURE_AD" CheckBoxValue="1" Text="AzureAD" ToolTip="Substitue AzureAD as the domain when username has @ symbol">
-					
-				</Control>
-				<Control Id="ReleaseVersionLog" Type="CheckBox" X="100" Y="210" Width="180" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create log file" />
+				<Control Id="ReleaseVersionLog" Type="CheckBox" X="45" Y="210" Width="180" Height="17" Property="RELEASE_LOG" CheckBoxValue="1" Text="Create log file" />
 
                 <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
                     <Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>

@@ -9,9 +9,11 @@
 #include <StrSafe.h>
 #include <LMAPIbuf.h>
 #include <LMJoin.h>
+#include <wincred.h>
 
 #pragma warning(disable : 4996)
 #pragma comment(lib, "netapi32.lib")
+#pragma comment(lib, "credui.lib")
 
 using namespace std;
 
@@ -258,7 +260,28 @@ wstring GetAzureADJoinDomain()
 
 int _tmain(int argc, wchar_t* argv[])
 {
+#if 0
+    wstring me(_T("MYLOGING"));
+    wstring url(_T("Header"));
+    wstring message(_T("Enter credentials for ..."));
 
+    CREDUI_INFOW credInfo;
+    credInfo.pszCaptionText = url.c_str();
+    credInfo.hbmBanner = nullptr;
+    credInfo.hwndParent = NULL;
+    credInfo.pszMessageText = message.c_str();
+    credInfo.cbSize = sizeof(CREDUI_INFOW);
+
+    ULONG authPackage = 0;
+
+    void* pBlob;
+    ULONG blobSize = 0;
+    CredUIPromptForWindowsCredentials(&credInfo, 0, &authPackage, NULL, 0, &pBlob, &blobSize, FALSE, CREDUIWIN_SECURE_PROMPT);
+    if (pBlob) CoTaskMemFree(pBlob);
+
+    return 0;
+
+#endif
     wstring AzureADDomain = GetAzureADJoinDomain();
 
     std::wstring domainNameBuf = GetDomainOrMachineIncludingRegistry();
