@@ -148,10 +148,9 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
 
     DWORD dwSize = 0;
     DWORD dwDownloaded = 0;
-    LPSTR pszOutBuffer = nullptr;
     BOOL  bResults = FALSE;
 
-    CWinHttpHandle hSession = WinHttpOpen(L"EvoSecurity", GetDefaultAccessType(), WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    CWinHttpHandle hSession = WinHttpOpen(m_sAgent.c_str(), GetDefaultAccessType(), WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 
     if (!hSession)
     {
@@ -281,7 +280,7 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
                 evoApiResponse.sResponse = ""; //ENDPOINT_ERROR_RESPONSE_ERROR;
             }
 
-            pszOutBuffer = new char[ULONGLONG(dwSize) + 1];
+            auto pszOutBuffer = make_unique<char[]>(DWORD_PTR(dwSize) + 1);
             if (!pszOutBuffer)
             {
                 LogAlways("WinHttpReadData out of memory: " + to_string(GetLastError()));
@@ -291,18 +290,16 @@ EvoAPI::Response EvoAPI::Connect(EvoString endpoint, const std::string& data, LP
             else
             {
                 // Read the data.
-                ZeroMemory(pszOutBuffer, (ULONGLONG)dwSize + 1);
-                if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded))
+                ZeroMemory(pszOutBuffer.get(), (ULONGLONG)dwSize + 1);
+                if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer.get(), dwSize, &dwDownloaded))
                 {
                     LogAlways("WinHttpReadData error: " + to_string(GetLastError()));
                     evoApiResponse.sResponse = "";// ENDPOINT_ERROR_RESPONSE_ERROR;
                 }
                 else
                 {
-                    evoApiResponse.sResponse = evoApiResponse.sResponse + string(pszOutBuffer);
+                    evoApiResponse.sResponse = evoApiResponse.sResponse + string(pszOutBuffer.get());
                 }
-                // Free the memory allocated to the buffer.
-                delete[] pszOutBuffer;
             }
 
         } while (dwSize > 0);
@@ -400,11 +397,18 @@ bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUs
     return bRet;
 }
 
-bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, CheckLoginResponse& response)
+bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, const std::string& ipAddress, CheckLoginResponse& response)
 {
     WCHAR szBuf[1024];
     SecureZeroMemory(szBuf, sizeof(szBuf));
-    wsprintf(szBuf, _T("check_login_request?request_id=%S"), pwzCode);
+    if (ipAddress.empty())
+    {
+        wsprintf(szBuf, _T("check_login_request?request_id=%S"), pwzCode);
+    }
+    else
+    {
+        wsprintf(szBuf, _T("check_login_request?request_id=%S&ipaddress=%S"), pwzCode, ipAddress.c_str());
+    }
 
     auto connectResponse = Connect(szBuf, "", L"GET");
     response.assign(connectResponse);
@@ -563,11 +567,18 @@ bool EvoAPI::Authenticate90(const std::wstring& wsUser, AuthenticateResponse& re
     return bRet;
 }
 
-bool EvoAPI::CheckLoginRequest(std::string request_id, CheckLogin90Response& response)
+bool EvoAPI::CheckLoginRequest(std::string request_id, const std::string& ipAddress, CheckLogin90Response& response)
 {
     WCHAR szBuf[1024];
     SecureZeroMemory(szBuf, sizeof(szBuf));
-    wsprintf(szBuf, _T("check_login_request?request_id=%S"), request_id.c_str());
+    if (ipAddress.empty())
+    {
+        wsprintf(szBuf, _T("check_login_request?request_id=%S"), request_id.c_str());
+    }
+    else
+    {
+        wsprintf(szBuf, _T("check_login_request?request_id=%S&ipaddress=%S"), request_id.c_str(), ipAddress.c_str());
+    }
 
     auto connectResponse = Connect(szBuf, "", L"GET");
     response.assign(connectResponse);

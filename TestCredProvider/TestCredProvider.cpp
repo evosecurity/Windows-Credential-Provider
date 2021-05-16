@@ -256,7 +256,8 @@ int main()
 
 
 
-    lpCredProvider->SetUsageScenario(CPUS_LOGON, 0);
+    //lpCredProvider->SetUsageScenario(CPUS_LOGON, 0);
+    lpCredProvider->SetUsageScenario(CPUS_CHANGE_PASSWORD, 0);
 
 
     CComPtr<ICredentialProviderEvents> pEvents;

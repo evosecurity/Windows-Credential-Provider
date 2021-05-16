@@ -10,10 +10,12 @@
 #include <LMAPIbuf.h>
 #include <LMJoin.h>
 #include <wincred.h>
+#include <NTSecAPI.h>
 
 #pragma warning(disable : 4996)
 #pragma comment(lib, "netapi32.lib")
 #pragma comment(lib, "credui.lib")
+#pragma comment(lib, "secur32")
 
 using namespace std;
 
@@ -38,10 +40,10 @@ bool ValidateMFA(EvoAPI::ValidateMFAResponse& response)
     return EvoApi.ValidateMFA(sAuthCode.c_str(), GlobalUserName, GlobalPassword.c_str(), response);
 }
 
-bool CheckLogin(std::string request_id, EvoAPI::CheckLoginResponse& response)
+bool CheckLogin(std::string request_id, std::string ipAddress, EvoAPI::CheckLoginResponse& response)
 {
     EvoAPI evoapi;
-    return evoapi.CheckLoginRequest(request_id.c_str(), response);
+    return evoapi.CheckLoginRequest(request_id.c_str(), ipAddress, response);
 }
 
 extern void TestJson();
@@ -130,7 +132,7 @@ void TestMFA10()
 }
 
 
-void TestPoll10()
+void TestPoll10(std::string ipAddress)
 {
     EvoAPI::AuthenticateResponse authenticateResponse;
     bool bAuth = Authenticate(authenticateResponse);
@@ -145,7 +147,7 @@ void TestPoll10()
         {
             Sleep(1000);
             cout << "Checking ...  " << endl;
-            LoginGood = CheckLogin(authenticateResponse.request_id, checkLoginResponse);
+            LoginGood = CheckLogin(authenticateResponse.request_id, ipAddress, checkLoginResponse);
             WriteBasicResponse(checkLoginResponse);
             if (LoginGood)
             {
@@ -195,7 +197,7 @@ void TestMFA90()
 
 }
 
-void TestPoll90()
+void TestPoll90(std::string ipaddress)
 {
     cout << "Testing polling" << endl;
     
@@ -220,7 +222,7 @@ void TestPoll90()
 
         EvoAPI evo;
         EvoAPI::CheckLogin90Response checkLogin90Response;
-        LoginGood = evo.CheckLoginRequest(response.request_id, checkLogin90Response);
+        LoginGood = evo.CheckLoginRequest(response.request_id, ipaddress, checkLogin90Response);
         if (LoginGood)
         {
             cout << "\nChecked ok" << endl;
@@ -258,9 +260,88 @@ wstring GetAzureADJoinDomain()
     return wret;
 }
 
+struct LSAHANDLE
+{
+    HANDLE handle = 0;
+
+    operator HANDLE()
+    {
+        return handle;
+    }
+    ~LSAHANDLE()
+    {
+        if (handle != NULL)
+            LsaDeregisterLogonProcess(handle);
+    }
+    HANDLE* operator&()
+    {
+        ATLASSERT(handle == nullptr);
+        return &handle;
+    }
+};
+
+template <size_t SIZE = 256>
+struct LsaString : public LSA_STRING
+{
+
+    LsaString()
+    {
+        MaximumLength = SIZE;
+        Length = 0;
+        Buffer = pBuf.get();
+    }
+
+    LsaString(LPCSTR pWhat)
+    {
+        MaximumLength = SIZE;
+        Length = 0;
+        Buffer = pBuf.get();
+        Init(pWhat);
+    }
+    void Init(LPCSTR pWhat)
+    {
+        size_t len = strlen(pWhat);
+        if (len >= SIZE)
+            throw;
+        strcpy(Buffer, pWhat);
+        Length = (USHORT) len;
+    }
+    unique_ptr<char[]> pBuf = make_unique< char[] >(SIZE);
+};
+
+class CoTaskMemory
+{
+    void* pv = nullptr;
+public:
+    ~CoTaskMemory()
+    {
+        if (pv)
+        {
+            CoTaskMemFree(pv);
+        }
+    }
+
+    LPVOID* operator&() {
+        return &pv;
+    }
+    operator bool()
+    {
+        return pv != nullptr;
+    }
+};
+
+string GetExternalIPAddress()
+{
+    EvoAPI api(L"https://ifconfig.me");
+    auto resp = api.Connect(L"/ip", "", L"GET");
+    return resp.sResponse;
+}
+
+
 int _tmain(int argc, wchar_t* argv[])
 {
-#if 0
+    auto ipAddress = GetExternalIPAddress();
+#if 1
     wstring me(_T("MYLOGING"));
     wstring url(_T("Header"));
     wstring message(_T("Enter credentials for ..."));
@@ -274,10 +355,33 @@ int _tmain(int argc, wchar_t* argv[])
 
     ULONG authPackage = 0;
 
-    void* pBlob;
+    LSAHANDLE lsaHandle;
+    LsaConnectUntrusted(&lsaHandle);
+
+    //LsaString<> lsaString("EvoCredProvider");
+    //LsaString<> lsaString(MICROSOFT_KERBEROS_NAME_A);
+    //LsaString<> lsaString(NEGOSSP_NAME_A);
+    LsaString<> lsaString(MSV1_0_PACKAGE_NAME);
+
+
+    ULONG ulPackage = 0;
+    //LsaLookupAuthenticationPackage(lsaHandle, &lsaString, &ulPackage);
+
+    ulPackage = 0;
+
     ULONG blobSize = 0;
-    CredUIPromptForWindowsCredentials(&credInfo, 0, &authPackage, NULL, 0, &pBlob, &blobSize, FALSE, CREDUIWIN_SECURE_PROMPT);
-    if (pBlob) CoTaskMemFree(pBlob);
+
+    DWORD dwFlags = CREDUIWIN_GENERIC; //CREDUIWIN_SECURE_PROMPT
+    dwFlags = CREDUIWIN_CHECKBOX;
+    dwFlags = CREDUIWIN_IN_CRED_ONLY;
+    dwFlags = CREDUIWIN_SECURE_PROMPT;
+
+    CoTaskMemory blob;
+    CredUIPromptForWindowsCredentials(&credInfo, 0, &ulPackage, NULL, 0, &blob, &blobSize, FALSE, dwFlags);
+
+    if (blob) {
+
+    }
 
     return 0;
 
@@ -319,10 +423,14 @@ int _tmain(int argc, wchar_t* argv[])
     //EvoAPI::SetCharWidthLog(TheFuncToLog);
     EvoAPI::SetCharWidthExtLogFunc(TheFuncExtToLog);
 
-    //TestMFA90();
-    //TestPoll90();
+    wcout << L"GlobalUserName=" << GlobalUserName << endl;
 
-    TestMFA10();
-    TestPoll10();
+    //TestMFA90();
+    //TestPoll90(ipAddress);
+
+    //TestMFA10();
+    //GlobalUserName = L"willcoxson@gmail.com";
+    //GlobalUserName = L"jorge.rodriguez@evoauth.com";
+    TestPoll10("");
 
 }

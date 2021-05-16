@@ -87,12 +87,12 @@ public:
 
     bool Authenticate(const std::wstring& wsUser, const secure_wstring& wsPassword, AuthenticateResponse& authResponse );
     bool ValidateMFA(const std::wstring& wsMFACode, const std::wstring&  wsUser, const std::wstring& wsPassword, ValidateMFAResponse& validateResponse);
-    bool CheckLoginRequest(LPCSTR pszCode, CheckLoginResponse& clResponse);
+    bool CheckLoginRequest(LPCSTR pszCode, const std::string& ipAddress, CheckLoginResponse& clResponse);
 
 
     bool ValidateMFA90(const std::wstring& wsMFACode, const std::wstring& wsUser, ValidateMFA90Response& response);
     bool Authenticate90(const std::wstring& wsUser, AuthenticateResponse& response);
-    bool CheckLoginRequest(const std::string request_id, CheckLogin90Response& response);
+    bool CheckLoginRequest(const std::string request_id, const std::string& ipAddress, CheckLogin90Response& response);
 
 
     void SetCustomPort(int port);
@@ -101,6 +101,18 @@ public:
     static void SetCharWidthExtLogFunc(CharWidthExtLogFunc pFunc);
 
     bool IsServerUnavailable() const;
+
+    void SetAgent(const std::wstring& agent)
+    {
+        m_sAgent = agent;
+    }
+
+    void SetTimeOuts(int nConnectTimeOut, int nSendTimeOut, int nReceiveTimeOut)
+    {
+        m_nConnectTimeOut = nConnectTimeOut;
+        m_nSendTimeOut = nSendTimeOut;
+        m_nReceiveTimeOut = nReceiveTimeOut;
+    }
 
 protected:
     EvoString m_strBaseUrl;
@@ -128,6 +140,8 @@ protected:
     {
         return m_nResolveTimeOut != RESOLOVE_TIMEOUT || m_nConnectTimeOut != CONNECT_TIMEOUT || m_nSendTimeOut != SEND_TIMEOUT || m_nReceiveTimeOut != RECEIVE_TIMEOUT;
     }
+
+    std::wstring m_sAgent { L"EvoSecurity" };
 };
 
 std::wstring GetDomainOrMachineIncludingRegistry();

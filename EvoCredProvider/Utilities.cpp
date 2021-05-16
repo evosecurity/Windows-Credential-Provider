@@ -97,14 +97,14 @@ HRESULT Utilities::KerberosLogon(
 		if (SUCCEEDED(hr))
 		{
 			KERB_INTERACTIVE_UNLOCK_LOGON kiul;
-			LPWSTR lpwszDomain = new wchar_t[domain.size() + 1];
-			wcscpy_s(lpwszDomain, (domain.size() + 1), domain.c_str());
+			auto pDomain = std::make_unique<wchar_t[]>  (domain.size() + 1);
+			wcscpy_s(pDomain.get(), (domain.size() + 1), domain.c_str());
 
-			LPWSTR lpwszUsername = new wchar_t[username.size() + 1];
-			wcscpy_s(lpwszUsername, (username.size() + 1), username.c_str());
+			auto pUsername = std::make_unique<wchar_t[]> (username.size() + 1);
+			wcscpy_s(pUsername.get(), (username.size() + 1), username.c_str());
 
 			// Initialize kiul with weak references to our credential.
-			hr = KerbInteractiveUnlockLogonInit(lpwszDomain, lpwszUsername, pwzProtectedPassword, cpus, &kiul);
+			hr = KerbInteractiveUnlockLogonInit(pDomain.get(), pUsername.get(), pwzProtectedPassword, cpus, &kiul);
 
 			if (SUCCEEDED(hr))
 			{
@@ -131,9 +131,6 @@ HRESULT Utilities::KerberosLogon(
 					}
 				}
 			}
-
-			delete[] lpwszDomain;
-			delete[] lpwszUsername;
 
 			CoTaskMemFree(pwzProtectedPassword);
 		}

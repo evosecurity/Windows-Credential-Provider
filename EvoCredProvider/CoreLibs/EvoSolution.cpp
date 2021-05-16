@@ -50,11 +50,33 @@ void EvoSolution::asyncEvoPoll(std::string transaction_id, std::wstring baseUrl,
 	t.detach();
 }
 
+std::string GetIPAddress()
+{
+	std::string ipAddress;
+
+	try {
+		EvoAPI evoapi(L"https://ifconfig.me");
+		evoapi.SetTimeOuts(5000, 5000, 5000);
+		auto resp = evoapi.Connect(L"/ip", "", L"GET");
+		if (resp.dwStatus == 200)
+		{
+			ipAddress = resp.sResponse;
+		}
+	}
+	catch (...) {
+
+	}
+
+	return ipAddress;
+}
+
 void EvoSolution::pollEvoThread(const std::string& transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback)
 {
 	DebugPrint("Starting pollEvoThread()");
 
 	this_thread::sleep_for(chrono::milliseconds(100));
+
+	std::string ipAddress = GetIPAddress();
 
 	bool success = false;
 	EvoAPI::CheckLoginResponse response;
@@ -62,7 +84,7 @@ void EvoSolution::pollEvoThread(const std::string& transaction_id, std::wstring 
 	{
 		EvoAPI evoApi(baseUrl, environmentUrl);
 
-		if (evoApi.CheckLoginRequest(transaction_id.c_str(), response))
+		if (evoApi.CheckLoginRequest(transaction_id.c_str(), ipAddress, response))
 		{
 			_runPoll.store(false);
 			success = true;
@@ -105,6 +127,7 @@ void EvoSolution::pollEvoThread90(const std::string& transaction_id, std::shared
 {
 	DebugPrint(__FUNCTION__);
 	this_thread::sleep_for(chrono::milliseconds(100));
+	std::string ipAddress = GetIPAddress();
 
 	bool success = false;
 	int its = 0;
@@ -113,7 +136,7 @@ void EvoSolution::pollEvoThread90(const std::string& transaction_id, std::shared
 	{
 		EvoAPI::CheckLogin90Response response;
 		EvoAPI evoapi(p->baseUrl, p->environmentUrl);
-		if (evoapi.CheckLoginRequest(transaction_id, response))
+		if (evoapi.CheckLoginRequest(transaction_id, ipAddress, response))
 		{
 			_runPoll.store(false);
 			success = true;
