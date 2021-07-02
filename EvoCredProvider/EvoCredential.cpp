@@ -530,7 +530,7 @@ HRESULT CEvoCredential::ReportResult(
 
 bool CEvoCredential::IsAccountExcluded()
 {
-	if (!m_config->excludedAccount.empty())
+	if (!m_config->failSafeUser.empty())
 	{
 		wstring toCompare;
 		if (!m_config->credential.domain.empty()) {
@@ -538,8 +538,8 @@ bool CEvoCredential::IsAccountExcluded()
 		}
 		toCompare.append(m_config->credential.username);
 		DebugPrint(L"toCompare: " + toCompare);
-		DebugPrint(L"excluded_account: " + m_config->excludedAccount);
-		if (EvoSolution::toUpperCase(toCompare) == EvoSolution::toUpperCase(m_config->excludedAccount)) {
+		DebugPrint(L"failsafe_user: " + m_config->failSafeUser);
+		if (EvoSolution::toUpperCase(toCompare) == EvoSolution::toUpperCase(m_config->failSafeUser)) {
 			DebugPrint("Login data matches excluded account, skipping 2FA...");
 			// Simulate 2FA success so the logic in GetSerialization can stay the same
 			_piStatus = EVOSOL_AUTH_SUCCESS;
@@ -550,6 +550,82 @@ bool CEvoCredential::IsAccountExcluded()
 	return false;
 }
 
+struct CredentialPair
+{
+	SecureWString user;
+	SecureWString pw;
+};
+
+typedef std::vector<CredentialPair> CredentialPairCollection;
+
+bool ParseCredPair(const SecureWString& credPairString, CredentialPair& credPair)
+{
+	size_t find = credPairString.find(L',');
+	if (find == credPairString.npos)
+		return false;
+
+	credPair = { credPairString.substr(0, find), credPairString.substr(find + 1) };
+	return true;
+}
+
+bool GetCredEntriesFromPayloadString(const SecureWString& wData, CredentialPairCollection& credentialEntries)
+{
+	if (wData.length() == 0)
+		return false;
+
+	size_t posStart = 0;
+	size_t pos = 0;
+	while (wData.npos != (pos = wData.find_first_of(L'|', posStart)))
+	{
+		SecureWString credPairString = wData.substr(posStart, pos - posStart);
+
+		CredentialPair credPair;
+
+		if (!ParseCredPair(credPairString, credPair))
+			return false;
+		credentialEntries.push_back(credPair);
+
+		posStart = pos + 1;
+	}
+
+	if (posStart < wData.length())
+	{
+		CredentialPair credPair;
+		if (!ParseCredPair(wData.substr(posStart), credPair))
+			return false;
+		credentialEntries.push_back(credPair);
+	}
+	return !credentialEntries.empty();
+}
+
+
+bool GetCredsFromPayload(std::string data, std::string salt, std::string iv, std::shared_ptr<Configuration> config, CredentialPairCollection& credentialEntries)
+{
+	try
+	{
+		credentialEntries.clear();
+
+		secure_string sData = RubyDecode(data, salt, iv, config->specialKey);
+		if (sData.length() == 0)
+			return false;
+
+		///  TODO: need to create secure versions of these ???
+		SecureWString wData = EvoSolution::s2ws(sData.c_str()).c_str();
+
+		return GetCredEntriesFromPayloadString(wData, credentialEntries);
+	}
+	catch (...)
+	{
+	}
+	return false;
+}
+
+bool GetCredsFromPayload(EvoAPI::LoginResponse& response, std::shared_ptr<Configuration> config, CredentialPairCollection& credentialEntries)
+{
+	return GetCredsFromPayload(response.data, response.salt, response.iv, config, credentialEntries);
+}
+
+#if 0
 bool GetCredsFromPayload(std::string data, std::string salt, std::string iv, std::shared_ptr<Configuration> config,
 	SecureWString& user, SecureWString& pw)
 {
@@ -583,6 +659,7 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, std::shared_ptr<Config
 {
 	return GetCredsFromPayload(response.data, response.salt, response.iv, config, user, pw);
 }
+#endif
 
 void DebugPayloadCreds(const SecureWString& user, const SecureWString& pw, const std::wstring& domain)
 {
@@ -638,26 +715,41 @@ HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 		DebugPrint("Bypassing privacyIDEA...");
 		m_config->bypassPrivacyIDEA = false;
 
-		SecureWString user, pw;
+		CredentialPairCollection credCollection;
 		if (GetCredsFromPayload(_privacyIDEA.m_PollResults.data, _privacyIDEA.m_PollResults.salt, _privacyIDEA.m_PollResults.iv, m_config,
-			user, pw))
+			credCollection))
 		{
-			m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
-			m_config->credential.validatedPassword = pw;
-			m_config->credential.validatedUsername = user;
-
-			_piStatus = EVOSOL_AUTH_SUCCESS;
+			if (credCollection.size() == 1)
+			{
+				auto credPair = credCollection.at(0);
+				m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
+				m_config->credential.validatedPassword = credPair.pw;
+				m_config->credential.validatedUsername = credPair.user;
+				_piStatus = EVOSOL_AUTH_SUCCESS;
+			}
+			else
+			{
+				// need to configure for 3rd step, but for now... take first
+				auto credPair = credCollection.at(0);
+				m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
+				m_config->credential.validatedPassword = credPair.pw;
+				m_config->credential.validatedUsername = credPair.user;
+				_piStatus = EVOSOL_AUTH_SUCCESS;
+			}
 
 #ifdef _DEBUG
-			wstring s(L"Payload user: ");
-			s += wstring(user.c_str());
-			DebugPrint(s);
+			for (const auto& credPair : credCollection)
+			{
+				wstring s(L"Payload user: ");
+				s += wstring(credPair.user.c_str());
+				DebugPrint(s);
 
-			s = L"Payload pw: ";
-			s += wstring(pw.c_str());
-			DebugPrint(s);
+				s = L"Payload pw: ";
+				s += wstring(credPair.pw.c_str());
+				DebugPrint(s);
 
-			s = L"Payload domain: " + m_config->credential.validatedDomain;
+			}
+			wstring s = L"Payload domain: " + m_config->credential.validatedDomain;
 			DebugPrint(s);
 #endif
 		}
@@ -697,18 +789,30 @@ HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 		EvoAPI evoApi(m_config->baseUrl, m_config->environmentUrl);
 		if (evoApi.ValidateMFA(m_config->credential.otp, m_config->credential.username, m_config->credential.password.c_str(), response))
 		{
-			SecureWString user, pw;
-			if (GetCredsFromPayload(response, m_config, user, pw))
+			CredentialPairCollection credCollection;
+			if (GetCredsFromPayload(response, m_config, credCollection))
 			{
 				ReleaseDebugPrint(L"MFA creds from payload");
 
-				m_config->credential.validatedUsername = user;
-				m_config->credential.validatedPassword = pw;
-				m_config->credential.validatedDomain = response.domain;
+				if (credCollection.size() == 1)
+				{
+					auto credPair = credCollection.at(0);
+					m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
+					m_config->credential.validatedPassword = credPair.pw;
+					m_config->credential.validatedUsername = credPair.user;
+					_piStatus = EVOSOL_AUTH_SUCCESS;
+				}
+				else
+				{
+					// need to configure for 3rd step, but for now... take first
+					auto credPair = credCollection.at(0);
+					m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
+					m_config->credential.validatedPassword = credPair.pw;
+					m_config->credential.validatedUsername = credPair.user;
+					_piStatus = EVOSOL_AUTH_SUCCESS;
+				}
 
-				_piStatus = EVOSOL_AUTH_SUCCESS;
-
-				DebugPayloadCreds(user, pw, response.domain);
+				//DebugPayloadCreds(user, pw, response.domain);
 			}
 			else {
 				ReleaseDebugPrint("MFA could not get payload creds");

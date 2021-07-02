@@ -11,6 +11,8 @@
 #include <LMJoin.h>
 #include <wincred.h>
 #include <NTSecAPI.h>
+#include <vector>
+#include <codecvt>
 
 #pragma warning(disable : 4996)
 #pragma comment(lib, "netapi32.lib")
@@ -63,7 +65,67 @@ std::string wstring_to_string(const std::wstring& ws)
     return sret;
 }
 
-bool GetCredsFromPayload(EvoAPI::LoginResponse& response, secure_string& user, secure_string& pw)
+struct CredentialPair
+{
+    SecureWString user;
+    SecureWString pw;
+};
+
+typedef std::vector<CredentialPair> CredentialPairCollection;
+
+bool ParseCredPair(const SecureWString& credPairString, CredentialPair& credPair)
+{
+    size_t find = credPairString.find(L',');
+    if (find == credPairString.npos)
+        return false;
+
+    credPair = { credPairString.substr(0, find), credPairString.substr(find + 1) };
+    return true;
+}
+
+
+bool GetCredEntriesFromPayloadString(const SecureWString& wData, CredentialPairCollection& credentialEntries)
+{
+    if (wData.length() == 0)
+        return false;
+
+    size_t posStart = 0;
+    size_t pos = 0;
+    while (wData.npos != (pos = wData.find_first_of(L'|', posStart)))
+    {
+        SecureWString credPairString = wData.substr(posStart, pos - posStart);
+
+        CredentialPair credPair;
+
+        if (!ParseCredPair(credPairString, credPair))
+            return false;
+        credentialEntries.push_back(credPair);
+
+        posStart = pos + 1;
+    }
+
+    if (posStart < wData.length())
+    {
+        CredentialPair credPair;
+        if (!ParseCredPair(wData.substr(posStart), credPair))
+            return false;
+        credentialEntries.push_back(credPair);
+    }
+    return !credentialEntries.empty();
+}
+
+namespace EvoSolutionX
+{
+    std::wstring s2ws(const std::string& s)
+    {
+        using convert_typeX = std::codecvt_utf8<wchar_t>;
+        std::wstring_convert<convert_typeX, wchar_t> converterX;
+
+        return converterX.from_bytes(s);
+    }
+}
+
+bool GetCredsFromPayload(EvoAPI::LoginResponse& response, CredentialPairCollection& credPairs)
 {
     std:: string skey;
     ATL::CRegKey rkey;
@@ -83,12 +145,9 @@ bool GetCredsFromPayload(EvoAPI::LoginResponse& response, secure_string& user, s
     {
         secure_string sData = RubyDecode(response.data, response.salt, response.iv, skey);
 
-        size_t find = sData.find(',');
+        SecureWString wData = EvoSolutionX::s2ws(sData.c_str()).c_str();
+        return GetCredEntriesFromPayloadString(wData, credPairs);
 
-        user = sData.substr(0, find);
-        pw = sData.substr(find + 1);
-
-        return true;
     }
     catch (...)
     {
@@ -116,10 +175,13 @@ void TestMFA10()
     if (bValidateMFA) {
         cout << "validate_mfa succeeded" << endl;
 
-        secure_string user, pw;
-        if (GetCredsFromPayload(validateMfaResponse, user, pw))
+        CredentialPairCollection credPairs;
+        if (GetCredsFromPayload(validateMfaResponse, credPairs))
         {
-            cout << "user: " << user << endl << "pw:   " << pw << endl;
+            for (auto credPair : credPairs)
+            {
+                wcout << "user: " << credPair.user << endl << "pw:   " << credPair.pw << endl;
+            }
         }
         else
         {
@@ -160,10 +222,14 @@ void TestPoll10(std::string ipAddress)
 
         if (LoginGood)
         {
-            secure_string user, pw;
-            if (GetCredsFromPayload(checkLoginResponse, user, pw))
+            CredentialPairCollection credPairs;
+            if (GetCredsFromPayload(checkLoginResponse, credPairs))
             {
-                cout << "user: " << user << endl << "pw:   " << pw << endl;
+                for (auto& cred : credPairs)
+                {
+                    wcout << "user: " << cred.user << endl << "pw:   " << cred.pw << endl;
+
+                }
             }
             else
             {
@@ -338,10 +404,31 @@ string GetExternalIPAddress()
 }
 
 
+void TestCredEntriesCode(LPCWSTR data)
+{
+    CredentialPairCollection credPairs;
+    if (!GetCredEntriesFromPayloadString(data, credPairs))
+        cout << "Bad payload" << endl;
+
+    for (const auto& credPair : credPairs)
+    {
+        wcout << "Username: " << credPair.user << endl << "Password: " << credPair.pw << endl;
+    }
+
+}
+
+void TestCredEntriesCode()
+{
+    TestCredEntriesCode(L"");
+    TestCredEntriesCode(L"bad|data");
+    TestCredEntriesCode(L"wilma,flintstone");
+    TestCredEntriesCode(L"fred,flintstone|barney,rubble");
+}
+
 int _tmain(int argc, wchar_t* argv[])
 {
     auto ipAddress = GetExternalIPAddress();
-#if 1
+#if 0
     wstring me(_T("MYLOGING"));
     wstring url(_T("Header"));
     wstring message(_T("Enter credentials for ..."));
@@ -431,6 +518,11 @@ int _tmain(int argc, wchar_t* argv[])
     //TestMFA10();
     //GlobalUserName = L"willcoxson@gmail.com";
     //GlobalUserName = L"jorge.rodriguez@evoauth.com";
-    TestPoll10("");
+
+
+    TestCredEntriesCode();
+
+
+    TestPoll10(ipAddress);
 
 }

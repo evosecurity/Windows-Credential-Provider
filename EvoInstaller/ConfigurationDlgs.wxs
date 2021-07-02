@@ -35,8 +35,8 @@
                 <Control Id="EnvironmentUrl" Type="Edit" X="115" Y="80" Width="170" Height="15" Property="ENVIRONMENTURL" />
                 <Control Id="DomainLabel" Type="Text" X="45" Y="100" Width="40" Height="15" TabSkip="no" Text="Domain:" />
                 <Control Id="Domain" Type="Edit" X="80" Y="100" Width="205" Height="15" Property="DOMAIN" />
-                <Control Type="Text" Id="ExcludedAccountLabel" Width="74" Height="17" X="45" Y="120" Text="Fail-safe User:" />
-                <Control Type="Edit" Id="ExcludedAccountEdit" Width="169" Height="15" X="117" Y="120" Property="EXCLUDEDUSER" />
+                <Control Type="Text" Id="FailSafeUserLabel" Width="74" Height="17" X="45" Y="120" Text="Fail-safe User:" />
+                <Control Type="Edit" Id="FailSafeUserEdit" Width="169" Height="15" X="117" Y="120" Property="FAILSAFEUSER" />
 				<Control Id="ApiKeyLabel" Type="Text" X="45" Y="140" Width="50" Height="15" TabSkip="no" Text="Shared Key:">
 					<Condition Action="disable">CREDENTIAL_MODE="90"</Condition>
 					<Condition Action="enable">CREDENTIAL_MODE="10" or CREDENTIAL_MODE="100"</Condition>
