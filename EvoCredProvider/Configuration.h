@@ -76,7 +76,7 @@ public:
 	std::wstring defaultOTPFailureText = L"";
 	std::wstring defaultOTPHintText = L"";
 
-	std::wstring excludedAccount = L"";
+	std::wstring failSafeUser = L"";
 
 	bool clearFields = true;
 	bool bypassPrivacyIDEA = false;

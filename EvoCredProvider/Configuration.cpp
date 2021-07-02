@@ -193,7 +193,7 @@ Configuration::Configuration()
 	rkey.Get(L"receive_timeout", piconfig.receiveTimeoutMS);
 
 	// format domain\username or computername\username
-	rkey.Get(L"excluded_account", excludedAccount);
+	rkey.Get(L"failsafe_user", failSafeUser);
 
 	rkey.Get(L"specialKey", specialKey);
 	rkey.Get(L"environmentUrl", environmentUrl);
