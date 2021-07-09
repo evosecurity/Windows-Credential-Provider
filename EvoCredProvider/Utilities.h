@@ -23,6 +23,7 @@ enum class SCENARIO
 	LOGON_TWO_STEP = 4,
 	UNLOCK_TWO_STEP = 5,
 	CHANGE_PASSWORD = 6,
+	THIRD_STEP = 7
 };
 
 class Utilities

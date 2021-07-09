@@ -339,6 +339,7 @@ HRESULT Utilities::SetScenario(
 {
 	LoggerPrint(__FUNCTION__);
 	HRESULT hr = S_OK;
+	int idx = 10;
 
 	switch (scenario)
 	{
@@ -374,6 +375,16 @@ HRESULT Utilities::SetScenario(
 		break;
 	case SCENARIO::NO_CHANGE:
 		LoggerPrint("SetScenario: NO_CHANGE");
+	case SCENARIO::THIRD_STEP:
+		LoggerPrint("SetScenario: THIRD_STEP");
+		hr = SetFieldStatePairBatch(pCredential, pCPCE, s_rgScenarioThirdStepOTP);
+
+		// api says this returns S_OK if successfull.. nope.
+		while (S_OK == pCPCE->DeleteFieldComboBoxItem(pCredential, FID_ELEVATED_COMBO, 0) && (--idx > 0));
+		pCPCE->SetFieldString(pCredential, FID_SMALL_TEXT, L"Select user from combo");
+		pCPCE->SetFieldSubmitButton(pCredential, FID_SUBMIT_BUTTON, FID_ELEVATED_COMBO);
+		return hr;
+		break;
 	default:
 		break;
 	}

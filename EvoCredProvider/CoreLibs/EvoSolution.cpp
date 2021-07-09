@@ -43,10 +43,10 @@ bool EvoSolution::stopPoll()
 	return true;
 }
 
-void EvoSolution::asyncEvoPoll(std::string transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback)
+void EvoSolution::asyncEvoPoll10(std::string transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback)
 {
 	_runPoll.store(true);
-	std::thread t(&EvoSolution::pollEvoThread, this, transaction_id, baseUrl, environmentUrl, callback);
+	std::thread t(&EvoSolution::pollEvoThread10, this, transaction_id, baseUrl, environmentUrl, callback);
 	t.detach();
 }
 
@@ -70,7 +70,7 @@ std::string GetIPAddress()
 	return ipAddress;
 }
 
-void EvoSolution::pollEvoThread(const std::string& transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback)
+void EvoSolution::pollEvoThread10(const std::string& transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback)
 {
 	DebugPrint("Starting pollEvoThread()");
 
