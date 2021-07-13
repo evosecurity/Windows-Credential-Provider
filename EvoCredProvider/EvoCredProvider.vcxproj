@@ -234,13 +234,13 @@
     <ClInclude Include="CoreLibs\EvoSolution.h" />
     <ClInclude Include="DataProtectHelper.h" />
     <ClInclude Include="dllmain.h" />
-    <ClInclude Include="EvoConsts.h" />
     <ClInclude Include="EvoCredential.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="guids.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Provider.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="scenario.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="xdlldata.h" />
   </ItemGroup>

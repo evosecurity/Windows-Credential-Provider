@@ -361,6 +361,33 @@ static std::wstring s2ws(std::string s)
     return converterX.from_bytes(s);
 }
 
+template <class T>
+bool FillOutPayload(const nlohmann::json& j, T& response, LPCSTR lpszLogMessageFail)
+{
+    bool bRet = false;
+    try
+    {
+        response.success = j["success"];
+        response.offlineCode = j["offline_code"];
+        response.iters = j["iter"];
+        response.data = j["data"];
+        response.iv = j["iv"];
+        response.salt = j["salt"];
+        response.cipher = j["cipher"];
+        auto domain = j["domain"];
+        if (domain.is_string()) {
+            response.domain = s2ws(domain);
+        }
+        bRet = true;
+    }
+    catch (...)
+    {
+        LogAlways(lpszLogMessageFail);
+    }
+    return bRet;
+
+}
+
 bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUser, const std::wstring& wsPassword, ValidateMFAResponse& response)
 {
     char szBuf[1024];
@@ -377,24 +404,7 @@ bool EvoAPI::ValidateMFA(const std::wstring& wsMFACode, const std::wstring& wsUs
     if (j == nullptr)
         return false;
 
-    bool bRet = false;
-    try
-    {
-        response.success =  j["success"];
-        response.offlineCode = j["offline_code"];
-        response.iters = j["iter"];
-        response.data = j["data"];
-        response.iv = j["iv"];
-        response.salt = j["salt"];
-        response.cipher = j["cipher"];
-        response.domain = s2ws(j["domain"]);
-        bRet = true;
-    }
-    catch (...)
-    {
-        LogAlways("Missing elements in validate_mfa payload");
-    }
-    return bRet;
+    return FillOutPayload(j, response, "Missing elements in validate_mfa payload");
 }
 
 bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, const std::string& ipAddress, CheckLoginResponse& response)
@@ -419,24 +429,7 @@ bool EvoAPI::CheckLoginRequest(LPCSTR pwzCode, const std::string& ipAddress, Che
     if (j == nullptr)
         return false;
 
-    bool bRet = false;
-    try
-    {
-        response.success =  j["success"];
-        response.offlineCode = j["offline_code"];
-        response.iters = j["iter"];
-        response.data = j["data"];
-        response.iv = j["iv"];
-        response.salt = j["salt"];
-        response.cipher = j["cipher"];
-        response.domain = s2ws(j["domain"]);
-        bRet = true;
-    }
-    catch (...)
-    {
-        LogAlways("Missing elements in check_login_response payload");
-    }
-    return bRet;
+    return FillOutPayload(j, response, "Missing elements in check_login_response payload");
 }
 
 
@@ -495,8 +488,6 @@ std::wstring GetDomainOrMachineIncludingRegistry()
 
     return L"";
 }
-
-
 
 bool EvoAPI::ValidateMFA90(const std::wstring& wsMFACode, const std::wstring& wsUser, ValidateMFA90Response& response)
 {

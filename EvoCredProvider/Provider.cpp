@@ -236,7 +236,7 @@ STDMETHODIMP CProvider::GetFieldDescriptorCount(unsigned long* pdwCount)
 {
 	DesperatePrint(__FUNCTION__);
 
-	*pdwCount = m_config->IsFullMode() ? FID_NUM_FIELDS : FID_NUM_FIELDS - 1;
+	*pdwCount = m_config->IsFullMode() ? FID_NUM_FIELDS : (m_config->IsTenMode() ? FID_NUM_FIELDS - 1 : FID_NUM_FIELDS - 2);
 
 	return S_OK;
 }
@@ -273,6 +273,9 @@ STDMETHODIMP CProvider::GetFieldDescriptorAt(unsigned long dwIndex, struct _CRED
 			label = m_config->otpFieldText;
 			if (label.empty())
 				label = Utilities::GetTranslatedText(TEXT_OTP);
+			break;
+		case FID_ELEVATED_COMBO:
+			label = L"ElevatedComboComboCombo";
 			break;
 		case FID_CONTEXT_CHANGER:
 			DebugPrint(L"Getting Context Changer Text");

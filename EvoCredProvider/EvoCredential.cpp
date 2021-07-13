@@ -395,11 +395,14 @@ HRESULT CEvoCredential::GetComboBoxValueAt(DWORD dwFieldID, DWORD dwItem, PWSTR*
 HRESULT CEvoCredential::SetComboBoxSelectedValue(DWORD dwFieldID, DWORD dwSelectedItem)
 {
 	DebugPrint(__FUNCTION__);
-	UNREFERENCED_PARAMETER(dwSelectedItem);
 	// Validate parameters.
 	if (dwFieldID < FID_NUM_FIELDS &&
 		(CPFT_COMBOBOX == _rgCredProvFieldDescriptors[dwFieldID].cpft))
 	{
+		if (dwFieldID == FID_ELEVATED_COMBO)
+		{
+			_dwSelectedItemThirdStep = dwSelectedItem;
+		}
 		return S_OK;
 	}
 	else
@@ -549,14 +552,6 @@ bool CEvoCredential::IsAccountExcluded()
 
 	return false;
 }
-
-struct CredentialPair
-{
-	SecureWString user;
-	SecureWString pw;
-};
-
-typedef std::vector<CredentialPair> CredentialPairCollection;
 
 bool ParseCredPair(const SecureWString& credPairString, CredentialPair& credPair)
 {
@@ -709,6 +704,19 @@ HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 	if (IsAccountExcluded())
 		return S_OK;
 
+	if (_NeedsThirdStep)
+	{
+		_NeedsThirdStep = false;
+		if (_dwSelectedItemThirdStep < _credPairs.size())
+		{
+			const auto& credPair = _credPairs.at(_dwSelectedItemThirdStep);
+			m_config->credential.validatedUsername = credPair.user;
+			m_config->credential.validatedPassword = credPair.pw;
+		}
+		_credPairs.clear();
+		return S_OK;
+	}
+
 	//  way we're using it is different
 	if (m_config->bypassPrivacyIDEA)
 	{
@@ -716,26 +724,23 @@ HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 		m_config->bypassPrivacyIDEA = false;
 
 		CredentialPairCollection credCollection;
-		if (GetCredsFromPayload(_privacyIDEA.m_PollResults.data, _privacyIDEA.m_PollResults.salt, _privacyIDEA.m_PollResults.iv, m_config,
+		if (GetCredsFromPayload(_EvoSolution.m_PollResults.data, _EvoSolution.m_PollResults.salt, _EvoSolution.m_PollResults.iv, m_config,
 			credCollection))
 		{
+			//credCollection.push_back({ L"jorge.rodriguez", L"Testing123!" }); // debugging hack to force third step
 			if (credCollection.size() == 1)
 			{
-				auto credPair = credCollection.at(0);
-				m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
+				const auto& credPair = credCollection.at(0);
 				m_config->credential.validatedPassword = credPair.pw;
 				m_config->credential.validatedUsername = credPair.user;
-				_piStatus = EVOSOL_AUTH_SUCCESS;
 			}
 			else
 			{
-				// need to configure for 3rd step, but for now... take first
-				auto credPair = credCollection.at(0);
-				m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
-				m_config->credential.validatedPassword = credPair.pw;
-				m_config->credential.validatedUsername = credPair.user;
-				_piStatus = EVOSOL_AUTH_SUCCESS;
+				_NeedsThirdStep = true;
+				_credPairs = credCollection;
 			}
+			m_config->credential.validatedDomain = _EvoSolution.m_PollResults.domain;
+			_piStatus = EVOSOL_AUTH_SUCCESS;
 
 #ifdef _DEBUG
 			for (const auto& credPair : credCollection)
@@ -757,7 +762,7 @@ HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 		return S_OK;
 	}
 
-	if (m_config->twoStepHideOTP && !m_config->isSecondStep) {
+	if (m_config->IsFirstStep()) {
 		// is first step
 		DebugPrint("Connect First step");
 		DebugPrint(L"Base Url: " + m_config->baseUrl);
@@ -768,8 +773,8 @@ HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 		bool bSuccess = evoApi.Authenticate(m_config->credential.username, m_config->credential.password, response);
 		if (bSuccess)
 		{
-			DebugPrint(L"Start poll");
-			_privacyIDEA.asyncEvoPoll(response.request_id, m_config->baseUrl, m_config->environmentUrl, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
+			DebugPrint(L"Start poll 10");
+			_EvoSolution.asyncEvoPoll10(response.request_id, m_config->baseUrl, m_config->environmentUrl, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
 		}
 		else
 		{
@@ -781,7 +786,7 @@ HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 		}
 
 	}
-	else if (m_config->twoStepHideOTP && m_config->isSecondStep) {
+	else if (m_config->IsSecondStep()) {
 		// is second step
 		DebugPrint("Connect Second step");
 		
@@ -792,25 +797,20 @@ HRESULT CEvoCredential::Connect10(IQueryContinueWithStatus* pqcws)
 			CredentialPairCollection credCollection;
 			if (GetCredsFromPayload(response, m_config, credCollection))
 			{
-				ReleaseDebugPrint(L"MFA creds from payload");
-
+				//credCollection.push_back({ L"jorge.rodriguez", L"Testing123!" }); // debugging hack to force two logins...
 				if (credCollection.size() == 1)
 				{
-					auto credPair = credCollection.at(0);
-					m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
+					const auto& credPair = credCollection.at(0);
 					m_config->credential.validatedPassword = credPair.pw;
 					m_config->credential.validatedUsername = credPair.user;
-					_piStatus = EVOSOL_AUTH_SUCCESS;
 				}
 				else
 				{
-					// need to configure for 3rd step, but for now... take first
-					auto credPair = credCollection.at(0);
-					m_config->credential.validatedDomain = _privacyIDEA.m_PollResults.domain;
-					m_config->credential.validatedPassword = credPair.pw;
-					m_config->credential.validatedUsername = credPair.user;
-					_piStatus = EVOSOL_AUTH_SUCCESS;
+					_NeedsThirdStep = true;
+					_credPairs = credCollection;
 				}
+				m_config->credential.validatedDomain = _EvoSolution.m_PollResults.domain;
+				_piStatus = EVOSOL_AUTH_SUCCESS;
 
 				//DebugPayloadCreds(user, pw, response.domain);
 			}
@@ -852,6 +852,18 @@ HRESULT CEvoCredential::GetSerialization10(
 
 	m_config->provider.field_strings = _rgFieldStrings;
 
+	if (_NeedsThirdStep)
+	{
+		_util.SetScenario(this, m_pCredProvCredentialEvents, SCENARIO::THIRD_STEP);
+		_dwSelectedItemThirdStep = 0;
+		for (const auto credPair : _credPairs)
+		{
+			m_pCredProvCredentialEvents->AppendFieldComboBoxItem(this, FID_ELEVATED_COMBO, credPair.user.c_str());
+		}
+		*m_config->provider.pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
+		DebugPrint("Doing third step");
+		return S_OK;
+	}
 
 	if (m_config->credential.passwordMustChange)
 	{
@@ -876,7 +888,7 @@ HRESULT CEvoCredential::GetSerialization10(
 			// If we got here, Connect() is not a success yet
 			// set UI for first or second step
 
-			if (m_config->isSecondStep == false && m_config->twoStepHideOTP)
+			if (m_config->IsFirstStep())
 			{
 				if (_piStatus == EVOSOL_SERVER_PREPOLL_FAILED)
 				{
@@ -929,8 +941,8 @@ HRESULT CEvoCredential::GetSerialization10(
 				// In this case the error is contained in a valid response from PI
 				else if (_piStatus == EVOSOL_AUTH_ERROR)
 				{
-					errorMessage = _privacyIDEA.getLastErrorMessage();
-					errorCode = _privacyIDEA.getLastError();
+					errorMessage = _EvoSolution.getLastErrorMessage();
+					errorCode = _EvoSolution.getLastError();
 				}
 				else if (_piStatus == EVOSOL_WRONG_OFFLINE_SERVER_UNAVAILABLE)
 				{
@@ -965,7 +977,7 @@ HRESULT CEvoCredential::GetSerialization10(
 			// Reset the authentication
 			_piStatus = EVOSOL_STATUS_NOT_SET;
 			m_config->pushAuthenticationSuccessful = false;
-			//_privacyIDEA.stopPoll();
+			//_EvoSolution.stopPoll();
 
 			// Pack credentials for logon
 			if (m_config->provider.cpu == CPUS_CREDUI)
@@ -1054,8 +1066,8 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		bool bSuccess = evoApi.Authenticate90(m_config->credential.username, response);
 		if (bSuccess)
 		{
-			DebugPrint(L"Start poll");
-			_privacyIDEA.asyncEvoPoll90(response.request_id, m_config, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
+			DebugPrint(L"Start poll 90");
+			_EvoSolution.asyncEvoPoll90(response.request_id, m_config, std::bind(&CEvoCredential::PushEvoAuthenticationCallback, this, std::placeholders::_1));
 		}
 		else
 		{
@@ -1109,7 +1121,7 @@ HRESULT CEvoCredential::Connect90(IQueryContinueWithStatus* pqcws)
 		else
 		{
 			_piStatus = EVOSOL_AUTH_FAILURE;
-			//_privacyIDEA.stopPoll();
+			//_EvoSolution.stopPoll();
 			
 		}
 	}
@@ -1250,8 +1262,8 @@ HRESULT CEvoCredential::GetSerialization90(
 				// In this case the error is contained in a valid response from PI
 				else if (_piStatus == EVOSOL_AUTH_ERROR)
 				{
-					errorMessage = _privacyIDEA.getLastErrorMessage();
-					errorCode = _privacyIDEA.getLastError();
+					errorMessage = _EvoSolution.getLastErrorMessage();
+					errorCode = _EvoSolution.getLastError();
 				}
 				ShowErrorMessage(errorMessage, errorCode);
 				retVal = S_FALSE;
@@ -1267,7 +1279,7 @@ HRESULT CEvoCredential::GetSerialization90(
 
 			// Reset the authentication
 			_piStatus = EVOSOL_STATUS_NOT_SET;
-			_privacyIDEA.stopPoll();
+			_EvoSolution.stopPoll();
 
 			std::wstring domainToUse = m_config->credential.domain; // GetDomainOrMachineIncludingRegistry();
 			size_t findAmpersand = m_config->credential.username.find(L"@");
@@ -1377,7 +1389,6 @@ void CEvoCredential::UpdateLastOfflineCode()
 
 void CEvoCredential::PushEvoAuthenticationCallback(bool success)
 {
-//	DebugPrint(__FUNCTION__);
 	if (success)
 	{
 		DebugPrint(L"Push Success");

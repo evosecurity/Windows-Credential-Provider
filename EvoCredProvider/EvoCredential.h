@@ -13,6 +13,15 @@
 
 using namespace ATL;
 
+struct CredentialPair
+{
+	SecureWString user;
+	SecureWString pw;
+};
+
+typedef std::vector<CredentialPair> CredentialPairCollection;
+
+
 class ATL_NO_VTABLE CEvoCredential :
 	public CComObjectRootEx<CComSingleThreadModel>,
 	public IConnectableCredentialProviderCredential
@@ -73,16 +82,16 @@ public:
 	HRESULT Disconnect() { return E_NOTIMPL; }
 	HRESULT ReportResult(NTSTATUS ntsStatus, NTSTATUS ntsSubstatus, PWSTR* ppwszOptionalStatusText, CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon);
 	HRESULT Connect(IQueryContinueWithStatus* pqcws);
-	HRESULT GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
+	HRESULT GetSerialization(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, PWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
 
 	void PushEvoAuthenticationCallback(bool success);
 protected:
 
 	HRESULT Connect10(IQueryContinueWithStatus* pqcws);
-	HRESULT GetSerialization10(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
+	HRESULT GetSerialization10(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, PWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
 
 	HRESULT Connect90(IQueryContinueWithStatus* pqcws);
-	HRESULT GetSerialization90(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, LPWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
+	HRESULT GetSerialization90(CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE*, CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION*, PWSTR*, CREDENTIAL_PROVIDER_STATUS_ICON*);
 
 
 	bool IsAccountExcluded();
@@ -104,11 +113,13 @@ protected:
 																						 // _rgCredProvFieldDescriptors.
 
 	CComPtr<ICredentialProviderCredentialEvents> m_pCredProvCredentialEvents;
-	DWORD _dwComboIndex = 0;
 	Utilities _util = nullptr;
 	HRESULT _piStatus = E_FAIL;
 
-	EvoSolution _privacyIDEA;
+	EvoSolution _EvoSolution;
 	bool Is10Pct() const { return m_config->m_bTenPercent; }
+	bool _NeedsThirdStep = false;
+	CredentialPairCollection _credPairs;
+	DWORD _dwSelectedItemThirdStep = 0;
 };
 

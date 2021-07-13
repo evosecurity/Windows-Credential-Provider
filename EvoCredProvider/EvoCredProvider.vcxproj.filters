@@ -48,11 +48,11 @@
     <ClInclude Include="CoreLibs\EvoSolution.h">
       <Filter>CoreLibs</Filter>
     </ClInclude>
-    <ClInclude Include="EvoConsts.h">
-      <Filter>CoreLibs</Filter>
-    </ClInclude>
     <ClInclude Include="DataProtectHelper.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scenario.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

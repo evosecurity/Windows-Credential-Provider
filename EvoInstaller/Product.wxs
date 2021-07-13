@@ -32,7 +32,7 @@
 			 Version="$(var.Version)"
 			 UpgradeCode="a857e24b-638d-4a2e-b525-49e3d51de74d">
 
-		<Package Id="*" InstallerVersion="410" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated"
+		<Package Id="*" InstallerVersion="413" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated"
 				 Manufacturer="$(var.Publisher)"
 				 Description="$(var.ProductName) $(var.Version) Setup" />
 

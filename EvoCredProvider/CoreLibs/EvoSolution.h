@@ -32,8 +32,8 @@ public:
 
 
 	// Evo poll threads
-	void asyncEvoPoll(std::string transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback);
-	void pollEvoThread(const std::string& transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback);
+	void asyncEvoPoll10(std::string transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback);
+	void pollEvoThread10(const std::string& transaction_id, std::wstring baseUrl, std::wstring environmentUrl, std::function<void(bool)> callback);
 
 	void asyncEvoPoll90(std::string transacation_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback);
 	void pollEvoThread90(const std::string& transaction_id, std::shared_ptr<Configuration> p, std::function<void(bool)> callback);
