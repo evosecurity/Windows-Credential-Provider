@@ -1,6 +1,6 @@
 #pragma once
 
-#define FINALMENTE_BUILD 11
+#define FINALMENTE_BUILD 13
 #define PRODUCT_VERSION (1,0)
 #define FILE_VERSION    (1,0,0,FINALMENTE_BUILD)
 
@@ -21,7 +21,7 @@ FILESUBTYPE 0x0L \
 
 #define VERSION_COMPANY_NAME "Evo Security Technologies"
 #define VERSION_COPYRIGHT "(c) Evo Security Technologies.  All rights reserved."
-#define VERSION_FILE_VERSION "1.0.0.11"
+#define VERSION_FILE_VERSION "1.0.0.13"
 #define VERSION_PRODUCT_VERSION "1.0"
 #define VERSION_PRODUCT_NAME "Evo Secure Login"
 
